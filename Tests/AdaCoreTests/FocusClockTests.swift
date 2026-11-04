@@ -1,0 +1,45 @@
+import Foundation
+import AdaCore
+
+func expect(_ condition: @autoclosure () -> Bool, _ message: String) {
+    guard condition() else {
+        fputs("FAIL: \(message)\n", stderr)
+        exit(1)
+    }
+}
+
+let zero = Date(timeIntervalSince1970: 1_000)
+var clock = FocusClock(minutes: 25)
+clock.start(at: zero)
+clock.pause(at: zero.addingTimeInterval(73))
+expect(clock.remaining() == 1427, "Pause preserves remaining time")
+clock.start(at: zero.addingTimeInterval(600))
+expect(clock.remaining(at: zero.addingTimeInterval(610)) == 1417, "Resume uses the new deadline")
+clock = FocusClock(minutes: 1)
+clock.start(at: zero)
+expect(clock.finishIfNeeded(at: zero.addingTimeInterval(3600)), "Wake after deadline completes")
+expect(!clock.finishIfNeeded(at: zero.addingTimeInterval(3601)), "Completion fires once")
+expect(clock.completed && clock.progress() == 1 && clock.remaining() == 0, "Completed state is consistent")
+clock.start(at: zero.addingTimeInterval(4000))
+expect(clock.remaining(at: zero.addingTimeInterval(4000)) == 60 && !clock.completed, "Completed timer restarts")
+clock.reset(minutes: 50)
+expect(!clock.isRunning && clock.remaining() == 3000, "Reset selects a new duration")
+clock = FocusClock(minutes: 25)
+clock.start(at: zero)
+let restored = try JSONDecoder().decode(FocusClock.self, from: JSONEncoder().encode(clock))
+expect(restored.remaining(at: zero.addingTimeInterval(90)) == 1410, "Active session survives serialization")
+clock = FocusClock(minutes: 1)
+clock.start(at: zero)
+clock.pause(at: zero.addingTimeInterval(60))
+expect(clock.completed && !clock.isRunning, "Pause at deadline completes")
+clock = FocusClock(minutes: 25)
+clock.start(at: zero)
+clock.adjust(by: 300, at: zero.addingTimeInterval(60))
+expect(clock.remaining(at: zero.addingTimeInterval(60)) == 1740, "Extend active timer without pausing")
+expect(clock.duration == 1800, "Extended timer updates full duration")
+clock.adjust(by: -6000, at: zero.addingTimeInterval(60))
+expect(clock.remaining(at: zero.addingTimeInterval(60)) == 1, "Shortening clamps to one second")
+clock.pause(at: zero.addingTimeInterval(60))
+clock.adjust(by: 300, at: zero.addingTimeInterval(100))
+expect(!clock.isRunning && clock.remaining() == 301, "Paused adjustment keeps paused state")
+print("PASS: 13 focus clock checks")
