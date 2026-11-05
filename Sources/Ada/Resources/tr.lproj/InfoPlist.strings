@@ -1,0 +1,5 @@
+// Generated from InfoPlist.xcstrings; edit the catalog instead.
+"NSAppleEventsUsageDescription" = "Spotify ve Apple Müzik’te çalan parçanın adını, sanatçısını ve kapağını adada göstermek, seçtiğin oynatma düğmelerini kullanmak için izin gerekir.";
+"NSBluetoothAlwaysUsageDescription" = "Bluetooth aygıtı bağlandığında Ada’da gösterge göstermek için erişim gerekir.";
+"NSCalendarsFullAccessUsageDescription" = "Yaklaşan etkinliklerini Ada’da göstermek için takvim okuma erişimi gerekir.";
+"NSCameraUsageDescription" = "Ayna özelliğini açtığında kamerandan önizleme göstermek için izin gerekir. Kamera görüntüsü kaydedilmez veya gönderilmez.";

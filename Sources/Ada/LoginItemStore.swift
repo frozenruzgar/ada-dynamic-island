@@ -1,3 +1,4 @@
+import AdaCore
 import Combine
 import Foundation
 import ServiceManagement
@@ -52,8 +53,8 @@ final class LoginItemStore: ObservableObject {
             else { try service.unregister() }
         } catch {
             failure = requested
-                ? "Otomatik başlatma açılamadı. Tekrar dene."
-                : "Otomatik başlatma kapatılamadı. Tekrar dene."
+                ? L10n.string("Otomatik başlatma açılamadı. Tekrar dene.")
+                : L10n.string("Otomatik başlatma kapatılamadı. Tekrar dene.")
         }
         let result = service.status
         // The system may finish an external change while this request is running.
@@ -74,15 +75,15 @@ final class LoginItemStore: ObservableObject {
         }
         switch status {
         case .enabled:
-            statusMessage = "Mac’e giriş yaptığında Ada açılır."
+            statusMessage = L10n.string("Mac’e giriş yaptığında Ada açılır.")
         case .requiresApproval:
-            statusMessage = "Otomatik açılmak için Sistem Ayarları’nda Ada’ya izin ver."
+            statusMessage = L10n.string("Otomatik açılmak için Sistem Ayarları’nda Ada’ya izin ver.")
         case .notRegistered:
             statusMessage = nil
         case .notFound:
-            statusMessage = "Ada’nın başlangıç kaydı bulunamadı."
+            statusMessage = L10n.string("Ada’nın başlangıç kaydı bulunamadı.")
         @unknown default:
-            statusMessage = "Başlangıç durumu okunamadı."
+            statusMessage = L10n.string("Başlangıç durumu okunamadı.")
         }
     }
 }

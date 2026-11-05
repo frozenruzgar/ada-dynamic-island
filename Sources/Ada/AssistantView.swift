@@ -1,3 +1,4 @@
+import AdaCore
 import AppKit
 import SwiftUI
 import WebKit
@@ -7,7 +8,7 @@ import WebKit
 enum AssistantProvider: String, CaseIterable, Identifiable {
     case chatGPT, claude
     var id: String { rawValue }
-    var title: String { self == .chatGPT ? "ChatGPT" : "Claude" }
+    var title: String { self == .chatGPT ? L10n.string("ChatGPT") : L10n.string("Claude") }
     var symbol: String { self == .chatGPT ? "sparkles" : "asterisk" }
     var url: URL {
         URL(string: self == .chatGPT ? "https://chatgpt.com/" : "https://claude.ai/")!
@@ -19,20 +20,20 @@ enum AssistantTask: String, CaseIterable, Identifiable {
     var id: String { rawValue }
     var title: String {
         switch self {
-        case .ask: return "Soru sor"
-        case .summarize: return "Özetle"
-        case .improve: return "Düzelt"
-        case .translate: return "İngilizceye çevir"
-        case .email: return "E-posta taslağı"
+        case .ask: return L10n.string("Soru sor")
+        case .summarize: return L10n.string("Özetle")
+        case .improve: return L10n.string("Düzelt")
+        case .translate: return L10n.string("İngilizceye çevir")
+        case .email: return L10n.string("E-posta taslağı")
         }
     }
     var instruction: String {
         switch self {
         case .ask: return ""
-        case .summarize: return "Aşağıdaki metni Türkçe, kısa ve anlaşılır biçimde özetle. Ana noktaları koru:"
-        case .improve: return "Aşağıdaki metnin anlamını koruyarak yazımını ve anlatımını düzelt. Yalnızca düzeltilmiş metni ver:"
-        case .translate: return "Aşağıdaki metni doğal ve anlamı koruyan bir İngilizceyle çevir:"
-        case .email: return "Aşağıdaki notlardan konu satırı ve gövdesi olan açık, profesyonel bir Türkçe e-posta taslağı hazırla. Eksik bilgileri uydurma:"
+        case .summarize: return L10n.string("Aşağıdaki metni Türkçe, kısa ve anlaşılır biçimde özetle. Ana noktaları koru:")
+        case .improve: return L10n.string("Aşağıdaki metnin anlamını koruyarak yazımını ve anlatımını düzelt. Yalnızca düzeltilmiş metni ver:")
+        case .translate: return L10n.string("Aşağıdaki metni doğal ve anlamı koruyan bir İngilizceyle çevir:")
+        case .email: return L10n.string("Aşağıdaki notlardan konu satırı ve gövdesi olan açık, profesyonel bir Türkçe e-posta taslağı hazırla. Eksik bilgileri uydurma:")
         }
     }
 }
@@ -40,17 +41,21 @@ enum AssistantTask: String, CaseIterable, Identifiable {
 @MainActor
 final class AssistantStore: NSObject, ObservableObject, NSWindowDelegate {
     @Published var provider: AssistantProvider {
-        didSet { UserDefaults.standard.set(provider.rawValue, forKey: "assistantProvider") }
+        didSet { defaults.set(provider.rawValue, forKey: "assistantProvider") }
     }
     @Published var task: AssistantTask = .ask
     @Published var draft = ""
     @Published private(set) var status = ""
+    @Published private(set) var clearingSessions = false
+    @Published private(set) var sessionStatus: String?
 
+    private let defaults: UserDefaults
     private var windows: [AssistantProvider: NSWindow] = [:]
     private var sessions: [AssistantProvider: AssistantWebSession] = [:]
 
-    override init() {
-        provider = AssistantProvider(rawValue: UserDefaults.standard.string(forKey: "assistantProvider") ?? "") ?? .chatGPT
+    init(defaults: UserDefaults = .standard) {
+        self.defaults = defaults
+        provider = AssistantProvider(rawValue: defaults.string(forKey: "assistantProvider") ?? "") ?? .chatGPT
         super.init()
     }
 
@@ -62,7 +67,7 @@ final class AssistantStore: NSObject, ObservableObject, NSWindowDelegate {
 
     func readClipboard() {
         guard let text = NSPasteboard.general.string(forType: .string), !text.isEmpty else {
-            status = "Panoda metin yok."
+            status = L10n.string("Panoda metin yok.")
             return
         }
         draft = text
@@ -76,20 +81,21 @@ final class AssistantStore: NSObject, ObservableObject, NSWindowDelegate {
 
     func copyAndOpen() {
         guard !preparedPrompt.isEmpty else {
-            status = "Bir soru veya metin yaz."
+            status = L10n.string("Bir soru veya metin yaz.")
             return
         }
         NSPasteboard.general.clearContents()
         NSPasteboard.general.setString(preparedPrompt, forType: .string)
-        status = "Kopyalandı. Sohbete yapıştır."
+        status = L10n.string("Kopyalandı. Sohbete yapıştır.")
         showChat()
     }
 
     /// Opening a chat is the first point at which this feature accesses the network.
     func showChat() {
+        guard !clearingSessions else { return }
         let target = provider
         if let window = windows[target] {
-            NSApp.activate(ignoringOtherApps: true)
+            NSApp.activate()
             window.makeKeyAndOrderFront(nil)
             return
         }
@@ -97,7 +103,7 @@ final class AssistantStore: NSObject, ObservableObject, NSWindowDelegate {
         let window = NSWindow(contentRect: NSRect(x: 0, y: 0, width: 1040, height: 740),
                               styleMask: [.titled, .closable, .miniaturizable, .resizable],
                               backing: .buffered, defer: false)
-        window.title = "Ada · \(target.title)"
+        window.title = L10n.string("Ada · \(target.title)")
         window.minSize = NSSize(width: 900, height: 650)
         window.isReleasedWhenClosed = false
         window.delegate = self
@@ -105,7 +111,7 @@ final class AssistantStore: NSObject, ObservableObject, NSWindowDelegate {
         window.center()
         sessions[target] = session
         windows[target] = window
-        NSApp.activate(ignoringOtherApps: true)
+        NSApp.activate()
         window.makeKeyAndOrderFront(nil)
         session.loadHome()
     }
@@ -113,7 +119,7 @@ final class AssistantStore: NSObject, ObservableObject, NSWindowDelegate {
     func openInBrowser() {
         // Use only the provider's official landing URL. Drafts and credentials are
         // never encoded into URLs, and no session data is copied to another app.
-        status = NSWorkspace.shared.open(provider.url) ? "" : "Tarayıcı açılamadı."
+        status = NSWorkspace.shared.open(provider.url) ? "" : L10n.string("Tarayıcı açılamadı.")
     }
 
     func windowWillClose(_ notification: Notification) {
@@ -125,12 +131,30 @@ final class AssistantStore: NSObject, ObservableObject, NSWindowDelegate {
         sessions.removeValue(forKey: provider)
     }
 
+    func clearSessions(erase: (@MainActor () async -> Void)? = nil) async {
+        guard !clearingSessions else { return }
+        clearingSessions = true
+        sessionStatus = nil
+        closeWindows()
+        if let erase { await erase() }
+        else {
+            await WKWebsiteDataStore.default().removeData(
+                ofTypes: WKWebsiteDataStore.allWebsiteDataTypes(), modifiedSince: .distantPast)
+        }
+        clearingSessions = false
+        sessionStatus = L10n.string("Ada’daki sohbet oturumları temizlendi.")
+    }
+
     func shutdown() {
+        closeWindows()
+        draft = ""
+    }
+
+    private func closeWindows() {
         for session in sessions.values { session.stop() }
         for window in windows.values { window.delegate = nil; window.close() }
         windows.removeAll()
         sessions.removeAll()
-        draft = ""
     }
 }
 
@@ -142,7 +166,7 @@ struct AssistantView: View {
     var body: some View {
         HStack(spacing: 14) {
             VStack(alignment: .leading, spacing: 12) {
-                Picker("Sohbet hizmeti", selection: Binding(get: { store.provider }, set: { provider in
+                Picker(L10n.string("Sohbet hizmeti"), selection: Binding(get: { store.provider }, set: { provider in
                     store.provider = provider
                     onSelectProvider()
                 })) {
@@ -151,14 +175,14 @@ struct AssistantView: View {
                     }
                 }.labelsHidden().pickerStyle(.segmented)
                 Button(action: store.showChat) {
-                    Label("Sohbeti aç", systemImage: "bubble.left.and.bubble.right")
-                        .font(.system(size: 11, weight: .semibold))
+                    Label(L10n.string("Sohbeti aç"), systemImage: "bubble.left.and.bubble.right")
+                        .adaFont(size: 11, weight: .semibold)
                         .frame(maxWidth: .infinity).padding(.vertical, 10)
                         .background(accent.opacity(0.10), in: RoundedRectangle(cornerRadius: 11))
                 }.buttonStyle(IslandButtonStyle()).foregroundStyle(accent)
                 Button(action: store.openInBrowser) {
-                    Label("Tarayıcıda aç", systemImage: "arrow.up.right.square")
-                        .font(.system(size: 10, weight: .medium))
+                    Label(L10n.string("Tarayıcıda aç"), systemImage: "arrow.up.right.square")
+                        .adaFont(size: 10, weight: .medium)
                 }.buttonStyle(IslandButtonStyle()).foregroundStyle(.white.opacity(0.65))
                 Spacer(minLength: 0)
             }
@@ -169,39 +193,39 @@ struct AssistantView: View {
 
             VStack(alignment: .leading, spacing: 9) {
                 HStack {
-                    Text("Taslak").font(.system(size: 12, weight: .semibold))
+                    Text(L10n.string("Taslak")).adaFont(size: 12, weight: .semibold)
                     Spacer()
-                    Picker("İstek türü", selection: $store.task) {
+                    Picker(L10n.string("İstek türü"), selection: $store.task) {
                         ForEach(AssistantTask.allCases) { task in Text(task.title).tag(task) }
                     }.labelsHidden().frame(maxWidth: 180)
                 }
                 ZStack(alignment: .topLeading) {
                     if store.draft.isEmpty {
-                        Text("Soru veya metin…")
-                            .font(.system(size: 12)).foregroundStyle(.white.opacity(0.52))
+                        Text(L10n.string("Soru veya metin…"))
+                            .adaFont(size: 12).foregroundStyle(Palette.tertiaryText)
                             .padding(.top, 6).padding(.leading, 5).allowsHitTesting(false)
                     }
                     TextEditor(text: $store.draft)
-                        .font(.system(size: 12))
+                        .adaFont(size: 12)
                         .scrollContentBackground(.hidden)
-                        .accessibilityLabel("Taslak metni")
+                        .accessibilityLabel(L10n.string("Taslak metni"))
                 }
                 .frame(maxWidth: .infinity, maxHeight: .infinity)
                 .padding(5)
                 .background(.white.opacity(0.035), in: RoundedRectangle(cornerRadius: 10))
                 HStack(spacing: 12) {
-                    Button("Panodan al", action: store.readClipboard)
-                    Button("Temizle", action: store.clearDraft).disabled(store.draft.isEmpty)
+                    Button(L10n.string("Panodan al"), action: store.readClipboard)
+                    Button(L10n.string("Temizle"), action: store.clearDraft).disabled(store.draft.isEmpty)
                     Spacer(minLength: 0)
                     Button(action: store.copyAndOpen) {
-                        Label("Kopyala ve aç", systemImage: "arrow.up.right")
-                            .font(.system(size: 11, weight: .semibold))
+                        Label(L10n.string("Kopyala ve aç"), systemImage: "arrow.up.right")
+                            .adaFont(size: 11, weight: .semibold)
                             .padding(.horizontal, 13).padding(.vertical, 8)
                             .foregroundStyle(accent).background(accent.opacity(0.13), in: Capsule())
                     }.disabled(store.preparedPrompt.isEmpty)
-                }.font(.system(size: 10)).buttonStyle(IslandButtonStyle(cornerRadius: 100))
-                Text(store.status.isEmpty ? "Kopyaladıktan sonra sohbete yapıştır." : store.status)
-                    .font(.system(size: 10)).foregroundStyle(.white.opacity(0.60)).lineLimit(2)
+                }.adaFont(size: 10).buttonStyle(IslandButtonStyle(cornerRadius: 100))
+                Text(store.status.isEmpty ? L10n.string("Kopyaladıktan sonra sohbete yapıştır.") : store.status)
+                    .adaFont(size: 10).foregroundStyle(.white.opacity(0.60)).lineLimit(2)
             }
             .padding(16)
             .frame(maxWidth: .infinity, maxHeight: .infinity)
@@ -284,18 +308,18 @@ private final class AssistantWebSession: NSObject, ObservableObject, WKNavigatio
     private func showNavigationFailure(_ error: Error) {
         loading = false
         guard (error as NSError).code != NSURLErrorCancelled else { return }
-        errorMessage = "Sayfa açılamadı. Yenile veya tarayıcıda aç."
+        errorMessage = L10n.string("Sayfa açılamadı. Yenile veya tarayıcıda aç.")
     }
     func webViewWebContentProcessDidTerminate(_ webView: WKWebView) {
         loading = false
-        errorMessage = "Sohbet durdu. Sayfayı yenile."
+        errorMessage = L10n.string("Sohbet durdu. Sayfayı yenile.")
     }
     func webView(_ webView: WKWebView, decidePolicyFor navigationAction: WKNavigationAction,
-                 decisionHandler: @escaping (WKNavigationActionPolicy) -> Void) {
+                 decisionHandler: @escaping @MainActor @Sendable (WKNavigationActionPolicy) -> Void) {
         guard let url = navigationAction.request.url else { decisionHandler(.cancel); return }
         let scheme = url.scheme?.lowercased()
         guard scheme == "https" || scheme == "about" else {
-            notice = "Bu bağlantı burada açılamıyor."
+            notice = L10n.string("Bu bağlantı burada açılamıyor.")
             decisionHandler(.cancel)
             return
         }
@@ -309,7 +333,7 @@ private final class AssistantWebSession: NSObject, ObservableObject, WKNavigatio
         if navigationAction.navigationType == .linkActivated {
             NSWorkspace.shared.open(url)
         } else {
-            notice = "Giriş için tarayıcıda devam et."
+            notice = L10n.string("Giriş için tarayıcıda devam et.")
         }
         return nil
     }
@@ -322,14 +346,14 @@ private struct AssistantChatWindow: View {
         VStack(spacing: 0) {
             HStack(spacing: 12) {
                 Button(action: session.goBack) { Image(systemName: "chevron.left") }
-                    .disabled(!session.canGoBack).help("Geri").accessibilityLabel("Geri")
+                    .disabled(!session.canGoBack).help(L10n.string("Geri")).accessibilityLabel(L10n.string("Geri"))
                 Button(action: session.reload) { Image(systemName: "arrow.clockwise") }
-                    .help("Yenile").accessibilityLabel("Yenile")
+                    .help(L10n.string("Yenile")).accessibilityLabel(L10n.string("Yenile"))
                 Label(session.provider.title, systemImage: "lock.fill")
-                    .font(.system(size: 12, weight: .semibold))
-                Text(session.hostname).font(.system(size: 10)).foregroundStyle(.secondary).lineLimit(1)
+                    .adaFont(size: 12, weight: .semibold)
+                Text(session.hostname).adaFont(size: 10).foregroundStyle(.secondary).lineLimit(1)
                 Spacer()
-                Button("Tarayıcıda aç", action: session.openBrowser)
+                Button(L10n.string("Tarayıcıda aç"), action: session.openBrowser)
             }.padding(.horizontal, 16).padding(.vertical, 11)
             if session.loading {
                 ProgressView(value: session.progress).progressViewStyle(.linear).frame(height: 2)
@@ -337,9 +361,9 @@ private struct AssistantChatWindow: View {
             if let message = session.errorMessage ?? session.notice {
                 HStack(spacing: 10) {
                     Image(systemName: "info.circle")
-                    Text(message).font(.system(size: 11))
+                    Text(message).adaFont(size: 11)
                     Spacer()
-                    Button("Yenile", action: session.reload)
+                    Button(L10n.string("Yenile"), action: session.reload)
                 }.padding(12).background(.orange.opacity(0.12))
             }
             AssistantWebView(webView: session.webView)
@@ -357,7 +381,6 @@ private struct AssistantWebView: NSViewRepresentable {
 
 private extension View {
     func assistantSurface() -> some View {
-        background(.white.opacity(0.04), in: RoundedRectangle(cornerRadius: 18))
-        .overlay(RoundedRectangle(cornerRadius: 18).strokeBorder(.white.opacity(0.08), lineWidth: 0.8))
+        islandCardSurface(cornerRadius: 18)
     }
 }

@@ -1,3 +1,4 @@
+import AdaCore
 import AppKit
 import SwiftUI
 
@@ -27,11 +28,13 @@ final class PrompterStore: NSObject, ObservableObject, NSWindowDelegate {
     private var lastUptime: TimeInterval = 0
     private var editorWindow: NSWindow?
     private var scrubStart: CGFloat?
+    private let defaults: UserDefaults
     private let defaultsKey = "ada.prompter.v1"
 
-    override init() {
+    init(defaults: UserDefaults = .standard) {
+        self.defaults = defaults
         super.init()
-        if let data = UserDefaults.standard.data(forKey: defaultsKey),
+        if let data = defaults.data(forKey: defaultsKey),
            let saved = try? JSONDecoder().decode(SavedState.self, from: data) {
             script = saved.script
             speed = min(100, max(10, saved.speed))
@@ -44,7 +47,7 @@ final class PrompterStore: NSObject, ObservableObject, NSWindowDelegate {
     var hasScript: Bool { !script.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty }
     var progress: Double { travel > 0 ? min(1, max(0, Double(offset / travel))) : 0 }
     var finished: Bool { hasScript && travel > 0 && offset >= travel }
-    var playbackTitle: String { isPlaying ? "Duraklat" : finished ? "Yeniden başlat" : "Başlat" }
+    var playbackTitle: String { isPlaying ? L10n.string("Duraklat") : finished ? L10n.string("Yeniden başlat") : L10n.string("Başlat") }
 
     func togglePlayback() {
         guard hasScript else { showEditor(); return }
@@ -117,13 +120,13 @@ final class PrompterStore: NSObject, ObservableObject, NSWindowDelegate {
     private func savePreferences() {
         let state = SavedState(script: script, speed: speed, fontSize: fontSize,
                                mirrored: mirrored, centered: centered)
-        if let data = try? JSONEncoder().encode(state) { UserDefaults.standard.set(data, forKey: defaultsKey) }
+        if let data = try? JSONEncoder().encode(state) { defaults.set(data, forKey: defaultsKey) }
     }
 
     func showEditor() {
         pause()
         if editorWindow?.isVisible == true {
-            NSApp.activate(ignoringOtherApps: true)
+            NSApp.activate()
             editorWindow?.makeKeyAndOrderFront(nil)
             return
         }
@@ -133,7 +136,7 @@ final class PrompterStore: NSObject, ObservableObject, NSWindowDelegate {
             window = NSWindow(contentRect: NSRect(x: 0, y: 0, width: 620, height: 480),
                               styleMask: [.titled, .closable, .resizable, .miniaturizable],
                               backing: .buffered, defer: false)
-            window.title = "Teleprompter metni"
+            window.title = L10n.string("Teleprompter metni")
             window.minSize = NSSize(width: 500, height: 360)
             window.isReleasedWhenClosed = false
             window.delegate = self
@@ -150,7 +153,7 @@ final class PrompterStore: NSObject, ObservableObject, NSWindowDelegate {
             }))
         editorVisible = true
         onEditorVisibility?(true)
-        NSApp.activate(ignoringOtherApps: true)
+        NSApp.activate()
         window.makeKeyAndOrderFront(nil)
     }
 
@@ -174,22 +177,22 @@ private struct PrompterEditor: View {
 
     var body: some View {
         VStack(alignment: .leading, spacing: 14) {
-            Text("Konuşma metnini ekle").font(.system(size: 20, weight: .semibold))
-            Text("Metin bu Mac’te saklanır. Kaydettiğinde prompter başa döner.")
-                .font(.system(size: 12)).foregroundStyle(.secondary)
+            Text(L10n.string("Konuşma metnini ekle")).adaFont(size: 20, weight: .semibold)
+            Text(L10n.string("Metin bu Mac’te saklanır. Kaydettiğinde prompter başa döner."))
+                .adaFont(size: 12).foregroundStyle(.secondary)
             TextEditor(text: $draft)
-                .font(.system(size: 17))
+                .adaFont(size: 17)
                 .scrollContentBackground(.hidden)
                 .padding(12)
                 .background(.black.opacity(0.25), in: RoundedRectangle(cornerRadius: 12))
                 .overlay(RoundedRectangle(cornerRadius: 12).stroke(.white.opacity(0.10)))
                 .focused($focused)
-                .accessibilityLabel("Konuşma metni")
+                .accessibilityLabel(L10n.string("Konuşma metni"))
             HStack {
-                Text("\(draft.count) karakter").font(.caption).foregroundStyle(.secondary)
+                Text(L10n.string("\(draft.count) karakter")).adaFont(size: Typography.caption).foregroundStyle(.secondary)
                 Spacer()
-                Button("Vazgeç", action: onCancel).keyboardShortcut(.cancelAction)
-                Button("Metni kaydet") { onSave(draft) }
+                Button(L10n.string("Vazgeç"), action: onCancel).keyboardShortcut(.cancelAction)
+                Button(L10n.string("Metni kaydet")) { onSave(draft) }
                     .keyboardShortcut(.return, modifiers: .command)
                     .buttonStyle(IslandButtonStyle(emphasis: true, bordered: true))
                     .foregroundStyle(Color.accentColor)
@@ -203,7 +206,7 @@ private struct PrompterEditor: View {
 }
 
 private struct PrompterTextHeight: PreferenceKey {
-    static var defaultValue: CGFloat = 0
+    static let defaultValue: CGFloat = 0
     static func reduce(value: inout CGFloat, nextValue: () -> CGFloat) { value = nextValue() }
 }
 
@@ -241,30 +244,30 @@ struct TeleprompterView: View {
 
     private var playbackControls: some View {
         VStack(alignment: .leading, spacing: 9) {
-            Label("Teleprompter", systemImage: "text.viewfinder")
-                .font(.system(size: 11, weight: .semibold)).foregroundStyle(.white.opacity(0.62))
+            Label(L10n.string("Teleprompter"), systemImage: "text.viewfinder")
+                .adaFont(size: 11, weight: .semibold).foregroundStyle(.white.opacity(0.62))
             Spacer(minLength: 2)
             Button(action: store.togglePlayback) {
-                Label(store.hasScript ? store.playbackTitle : "Metin ekle",
+                Label(store.hasScript ? store.playbackTitle : L10n.string("Metin ekle"),
                       systemImage: store.isPlaying ? "pause.fill" : store.hasScript ? "play.fill" : "plus")
-                    .font(.system(size: 12, weight: .semibold))
+                    .adaFont(size: 12, weight: .semibold)
                     .frame(maxWidth: .infinity).frame(height: 34)
                     .background(accent.opacity(0.85), in: Capsule())
                     .foregroundStyle(.black)
             }.buttonStyle(IslandButtonStyle(cornerRadius: 100))
             Button(action: store.showEditor) {
-                Label("Metni düzenle", systemImage: "square.and.pencil")
-                    .font(.system(size: 11, weight: .medium))
+                Label(L10n.string("Metni düzenle"), systemImage: "square.and.pencil")
+                    .adaFont(size: 11, weight: .medium)
                     .frame(maxWidth: .infinity).frame(height: 27)
                     .background(.white.opacity(0.075), in: Capsule())
             }.buttonStyle(IslandButtonStyle(cornerRadius: 100))
-            Button("Başa dön", action: store.reset)
-                .font(.system(size: 10)).foregroundStyle(.white.opacity(0.55))
+            Button(L10n.string("Başa dön"), action: store.reset)
+                .adaFont(size: 10).foregroundStyle(Palette.tertiaryText)
                 .buttonStyle(IslandButtonStyle()).frame(maxWidth: .infinity)
                 .disabled(!store.hasScript)
             Spacer(minLength: 2)
-            Text(store.isPlaying ? "Boşluk: duraklat" : "Boşluk: devam et")
-                .font(.system(size: 9)).foregroundStyle(.white.opacity(0.35))
+            Text(store.isPlaying ? L10n.string("Boşluk: duraklat") : L10n.string("Boşluk: devam et"))
+                .adaFont(size: 9).foregroundStyle(Palette.tertiaryText)
                 .frame(maxWidth: .infinity)
         }
     }
@@ -274,7 +277,7 @@ struct TeleprompterView: View {
             ZStack(alignment: .top) {
                 if store.hasScript {
                     Text(store.script)
-                        .font(.system(size: store.fontSize, weight: .medium))
+                        .adaFont(size: store.fontSize, weight: .medium)
                         .lineSpacing(8)
                         .multilineTextAlignment(store.centered ? .center : .leading)
                         .frame(width: max(40, proxy.size.width - 20), alignment: store.centered ? .center : .leading)
@@ -297,11 +300,11 @@ struct TeleprompterView: View {
                         .allowsHitTesting(false)
                 } else {
                     VStack(spacing: 8) {
-                        Image(systemName: "text.aligncenter").font(.system(size: 25, weight: .light)).foregroundStyle(accent)
-                        Text("Metnini kameranın altından oku")
-                            .font(.system(size: 14, weight: .medium))
-                        Text("Metin ekle ile başla; hızını ve yazı boyutunu sağdan ayarla.")
-                            .font(.system(size: 11)).foregroundStyle(.white.opacity(0.45))
+                        Image(systemName: "text.aligncenter").adaFont(size: 25, weight: .light).foregroundStyle(accent)
+                        Text(L10n.string("Metnini kameranın altından oku"))
+                            .adaFont(size: 14, weight: .medium)
+                        Text(L10n.string("Metin ekle ile başla; hızını ve yazı boyutunu sağdan ayarla."))
+                            .adaFont(size: 11).foregroundStyle(Palette.tertiaryText)
                             .multilineTextAlignment(.center)
                     }.frame(maxWidth: .infinity, maxHeight: .infinity)
                 }
@@ -313,34 +316,34 @@ struct TeleprompterView: View {
             .clipped()
         }
         .accessibilityElement(children: .ignore)
-        .accessibilityLabel(store.hasScript ? "Konuşma metni. \(store.isPlaying ? "Okunuyor" : "Duraklatıldı"). Yüzde \(Int(store.progress * 100)) tamamlandı." : "Henüz konuşma metni eklenmedi")
+        .accessibilityLabel(store.hasScript ? L10n.string("Konuşma metni. \(store.isPlaying ? L10n.string("Okunuyor") : L10n.string("Duraklatıldı")). Yüzde \(Int(store.progress * 100)) tamamlandı.") : L10n.string("Henüz konuşma metni eklenmedi"))
     }
 
     private var readingControls: some View {
         VStack(spacing: 8) {
-            controlRow("Hız", value: "\(Int(store.speed))", minusLabel: "Okuma hızını azalt", plusLabel: "Okuma hızını artır",
+            controlRow(L10n.string("Hız"), value: "\(Int(store.speed))", minusLabel: L10n.string("Okuma hızını azalt"), plusLabel: L10n.string("Okuma hızını artır"),
                        minus: { store.speed = max(10, store.speed - 5) },
                        plus: { store.speed = min(100, store.speed + 5) })
-            controlRow("Yazı", value: "\(Int(store.fontSize))", minusLabel: "Yazıyı küçült", plusLabel: "Yazıyı büyüt",
+            controlRow(L10n.string("Yazı"), value: "\(Int(store.fontSize))", minusLabel: L10n.string("Yazıyı küçült"), plusLabel: L10n.string("Yazıyı büyüt"),
                        minus: { store.fontSize = max(14, store.fontSize - 1) },
                        plus: { store.fontSize = min(32, store.fontSize + 1) })
             HStack(spacing: 5) {
-                optionButton(store.centered ? "Ortala" : "Sola", selected: store.centered) { store.centered.toggle() }
-                optionButton("Ayna", selected: store.mirrored) { store.mirrored.toggle() }
+                optionButton(store.centered ? L10n.string("Ortala") : L10n.string("Sola"), selected: store.centered) { store.centered.toggle() }
+                optionButton(L10n.string("Ayna"), selected: store.mirrored) { store.mirrored.toggle() }
             }
-            Text(store.finished ? "Metin tamamlandı" : "Sürükleyerek konumu değiştir")
-                .font(.system(size: 9)).foregroundStyle(.white.opacity(0.35))
-                .lineLimit(1).minimumScaleFactor(0.8)
+            Text(store.finished ? L10n.string("Metin tamamlandı") : L10n.string("Sürükleyerek konumu değiştir"))
+                .adaFont(size: 9).foregroundStyle(Palette.tertiaryText)
+                .lineLimit(1)
         }
     }
 
     private func controlRow(_ title: String, value: String, minusLabel: String, plusLabel: String,
                             minus: @escaping () -> Void, plus: @escaping () -> Void) -> some View {
         HStack(spacing: 6) {
-            Text(title).font(.system(size: 10)).foregroundStyle(.white.opacity(0.5)).frame(width: 29, alignment: .leading)
+            Text(title).adaFont(size: 10).foregroundStyle(Palette.tertiaryText).frame(width: 29, alignment: .leading)
             Button(action: minus) { Image(systemName: "minus").frame(width: 21, height: 27) }
                 .buttonStyle(IslandButtonStyle()).accessibilityLabel(minusLabel)
-            Text(value).font(.system(size: 11, weight: .semibold, design: .rounded)).monospacedDigit()
+            Text(value).adaFont(size: 11, weight: .semibold, design: .rounded).monospacedDigit()
                 .foregroundStyle(accent).frame(minWidth: 20)
             Button(action: plus) { Image(systemName: "plus").frame(width: 21, height: 27) }
                 .buttonStyle(IslandButtonStyle()).accessibilityLabel(plusLabel)
@@ -352,9 +355,9 @@ struct TeleprompterView: View {
 
     private func optionButton(_ title: String, selected: Bool, action: @escaping () -> Void) -> some View {
         Button(action: action) {
-            Text(title).font(.system(size: 10, weight: .medium))
+            Text(title).adaFont(size: 10, weight: .medium)
                 .frame(maxWidth: .infinity).frame(height: 26)
-                .foregroundStyle(selected ? accent : .white.opacity(0.55))
+                .foregroundStyle(selected ? accent : Palette.tertiaryText)
                 .background(selected ? accent.opacity(0.19) : .white.opacity(0.06), in: Capsule())
                 .overlay(Capsule().stroke(selected ? accent.opacity(0.25) : .white.opacity(0.08)))
         }.buttonStyle(IslandButtonStyle(cornerRadius: 100))

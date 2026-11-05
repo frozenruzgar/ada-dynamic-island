@@ -1,3 +1,4 @@
+import AdaCore
 import AppKit
 import SwiftUI
 import UniformTypeIdentifiers
@@ -12,25 +13,25 @@ enum DashboardTileKind: String, Codable, CaseIterable, Identifiable {
 
     var title: String {
         switch self {
-        case .spotify: return "Spotify"
-        case .appleMusic: return "Apple Müzik"
-        case .chatGPT: return "ChatGPT"
-        case .claude: return "Claude"
-        case .quickActions: return "Hızlı araçlar"
-        case .battery: return "Pil"
-        case .focus: return "Odak"
-        case .notes: return "Notlar"
-        case .tasks: return "Görevler"
-        case .localMusic: return "Yerel müzik"
-        case .files: return "Dosyalar"
-        case .cloud: return "Bulut"
-        case .system: return "Sistem"
-        case .tools: return "Araçlar"
-        case .prompter: return "Teleprompter"
-        case .airDrop: return "AirDrop"
-        case .mirror: return "Ayna"
-        case .app: return "Uygulama"
-        case .website: return "Web sitesi"
+        case .spotify: return L10n.string("Spotify")
+        case .appleMusic: return L10n.string("Apple Müzik")
+        case .chatGPT: return L10n.string("ChatGPT")
+        case .claude: return L10n.string("Claude")
+        case .quickActions: return L10n.string("Hızlı araçlar")
+        case .battery: return L10n.string("Pil")
+        case .focus: return L10n.string("Odak")
+        case .notes: return L10n.string("Notlar")
+        case .tasks: return L10n.string("Görevler")
+        case .localMusic: return L10n.string("Yerel müzik")
+        case .files: return L10n.string("Dosyalar")
+        case .cloud: return L10n.string("Bulut")
+        case .system: return L10n.string("Sistem")
+        case .tools: return L10n.string("Araçlar")
+        case .prompter: return L10n.string("Teleprompter")
+        case .airDrop: return L10n.string("AirDrop")
+        case .mirror: return L10n.string("Ayna")
+        case .app: return L10n.string("Uygulama")
+        case .website: return L10n.string("Web sitesi")
         }
     }
 
@@ -147,6 +148,7 @@ final class DashboardLayoutStore: ObservableObject {
     static let storageKey = "dashboardTilesV1"
     @Published private(set) var tiles: [DashboardTile] { didSet { save() } }
     @Published var isEditing = false
+    @Published var focusedTileID: UUID?
     @Published var errorMessage: String?
     private let defaults: UserDefaults
 
@@ -173,17 +175,23 @@ final class DashboardLayoutStore: ObservableObject {
 
     @discardableResult
     func add(_ tile: DashboardTile) -> Bool {
+        var tile = Self.canonicalTile(tile)
+        if tile.kind == .spotify, let existing = tiles.first(where: { $0.kind == .spotify }) {
+            focusedTileID = existing.id
+            errorMessage = nil
+            return true
+        }
         guard tiles.count < Self.maxTiles else {
-            errorMessage = "En fazla \(Self.maxTiles) kutucuk ekleyebilirsin."
+            errorMessage = L10n.string("En fazla \(Self.maxTiles) kutucuk ekleyebilirsin.")
             return false
         }
         guard tile.isWellFormed else {
-            errorMessage = "Uygulama veya web adresini kontrol et."
+            errorMessage = L10n.string("Uygulama veya web adresini kontrol et.")
             return false
         }
-        var tile = tile
         if tiles.contains(where: { $0.id == tile.id }) { tile.id = UUID() }
         tiles.append(tile)
+        focusedTileID = tile.id
         errorMessage = nil
         return true
     }
@@ -192,10 +200,16 @@ final class DashboardLayoutStore: ObservableObject {
 
     @discardableResult
     func replace(id: UUID, with replacement: DashboardTile) -> Bool {
-        guard let index = tiles.firstIndex(where: { $0.id == id }), replacement.isWellFormed else { return false }
-        var tile = replacement
+        var tile = Self.canonicalTile(replacement)
+        guard let index = tiles.firstIndex(where: { $0.id == id }), tile.isWellFormed else { return false }
         tile.id = id
-        tiles[index] = tile
+        var updated = tiles
+        updated[index] = tile
+        if tile.kind == .spotify {
+            updated.removeAll { $0.kind == .spotify && $0.id != id }
+        }
+        tiles = updated
+        focusedTileID = id
         errorMessage = nil
         return true
     }
@@ -220,14 +234,26 @@ final class DashboardLayoutStore: ObservableObject {
 
     private static func normalize(_ tiles: [DashboardTile]) -> [DashboardTile] {
         var seen = Set<UUID>()
-        return tiles.filter(\.isWellFormed).prefix(maxTiles).map { tile in
-            var tile = tile
+        var hasSpotify = false
+        return Array(tiles.compactMap { original -> DashboardTile? in
+            var tile = canonicalTile(original)
+            guard tile.isWellFormed else { return nil }
+            if tile.kind == .spotify {
+                guard !hasSpotify else { return nil }
+                hasSpotify = true
+            }
             if !seen.insert(tile.id).inserted {
                 tile.id = UUID()
                 seen.insert(tile.id)
             }
             return tile
-        }
+        }.prefix(maxTiles))
+    }
+
+    private static func canonicalTile(_ original: DashboardTile) -> DashboardTile {
+        var tile = original
+        if tile.kind == .app && tile.appBundleID == "com.spotify.client" { tile.kind = .spotify }
+        return tile
     }
 
     private func save() {
@@ -237,7 +263,7 @@ final class DashboardLayoutStore: ObservableObject {
 }
 
 struct DashboardTilePicker: View {
-    var title = "Ne eklemek istersin?"
+    var title = L10n.string("Ne eklemek istersin?")
     var onCancel: () -> Void = {}
     let onChoose: (DashboardTile) -> Void
     @Environment(\.dismiss) private var dismiss
@@ -254,31 +280,31 @@ struct DashboardTilePicker: View {
     var body: some View {
         VStack(alignment: .leading, spacing: 14) {
             HStack {
-                Text(title).font(.system(size: 20, weight: .semibold))
+                Text(title).adaFont(size: 20, weight: .semibold)
                 Spacer()
                 Button { onCancel(); dismiss() } label: {
                     Image(systemName: "xmark").frame(width: 24, height: 24)
                 }.buttonStyle(IslandButtonStyle(cornerRadius: 100))
-                    .keyboardShortcut(.cancelAction).accessibilityLabel("Kapat")
+                    .keyboardShortcut(.cancelAction).accessibilityLabel(L10n.string("Kapat"))
             }
             HStack(spacing: 9) {
-                Button(action: chooseApplication) { Label("Uygulama seç…", systemImage: "app.badge") }
-                Button { showsWebsite.toggle(); error = nil } label: { Label("Web sitesi", systemImage: "globe") }
-            }.buttonStyle(IslandButtonStyle(bordered: true)).font(.system(size: 12))
+                Button(action: chooseApplication) { Label(L10n.string("Uygulama seç…"), systemImage: "app.badge") }
+                Button { showsWebsite.toggle(); error = nil } label: { Label(L10n.string("Web sitesi"), systemImage: "globe") }
+            }.buttonStyle(IslandButtonStyle(bordered: true)).adaFont(size: 12)
             if showsWebsite {
                 VStack(spacing: 8) {
-                    TextField("Adı", text: $websiteName)
+                    TextField(L10n.string("Adı"), text: $websiteName)
                     HStack(spacing: 8) {
                         TextField("https://…", text: $websiteAddress).onSubmit(addWebsite)
-                        Button("Ekle", action: addWebsite).buttonStyle(IslandButtonStyle(bordered: true))
+                        Button(L10n.string("Ekle"), action: addWebsite).buttonStyle(IslandButtonStyle(bordered: true))
                     }
                 }.textFieldStyle(.roundedBorder)
             }
-            if let error { Text(error).font(.system(size: 11)).foregroundStyle(.red) }
+            if let error { Text(error).adaFont(size: 11).foregroundStyle(.red) }
             ScrollView {
                 VStack(alignment: .leading, spacing: 14) {
                     choices(applications)
-                    Text("Ada").font(.system(size: 12, weight: .semibold)).foregroundStyle(.secondary)
+                    Text("Ada").adaFont(size: 12, weight: .semibold).foregroundStyle(.secondary)
                     choices(widgets)
                 }.padding(3)
             }.scrollIndicators(.hidden)
@@ -292,8 +318,14 @@ struct DashboardTilePicker: View {
             ForEach(kinds) { kind in
                 Button { onChoose(DashboardTile(kind: kind)) } label: {
                     VStack(spacing: 6) {
-                        Image(systemName: kind.symbol).font(.system(size: 19)).foregroundStyle(Color.accentColor)
-                        Text(kind.title).font(.system(size: 11, weight: .medium)).lineLimit(1)
+                        if kind == .spotify {
+                            SpotifyBrandIcon(size: 30)
+                        } else {
+                            Image(systemName: kind.symbol)
+                                .adaFont(size: 19).foregroundStyle(Color.accentColor)
+                                .frame(height: 30)
+                        }
+                        Text(kind.title).adaFont(size: 11, weight: .medium).lineLimit(1)
                     }
                     .frame(maxWidth: .infinity).frame(height: 62)
                     .background(.primary.opacity(0.055), in: RoundedRectangle(cornerRadius: 12))
@@ -305,8 +337,8 @@ struct DashboardTilePicker: View {
 
     private func chooseApplication() {
         let panel = NSOpenPanel()
-        panel.title = "Bir uygulama seç"
-        panel.prompt = "Ekle"
+        panel.title = L10n.string("Bir uygulama seç")
+        panel.prompt = L10n.string("Ekle")
         panel.directoryURL = URL(fileURLWithPath: "/Applications", isDirectory: true)
         panel.allowedContentTypes = [.applicationBundle]
         panel.canChooseFiles = true
@@ -315,7 +347,7 @@ struct DashboardTilePicker: View {
         panel.allowsMultipleSelection = false
         guard panel.runModal() == .OK, let url = panel.url else { return }
         guard let tile = DashboardTile.application(at: url) else {
-            error = "Geçerli bir uygulama seç."
+            error = L10n.string("Geçerli bir uygulama seç.")
             return
         }
         onChoose(tile)
@@ -323,7 +355,7 @@ struct DashboardTilePicker: View {
 
     private func addWebsite() {
         guard let url = DashboardTile.validWebsiteURL(websiteAddress) else {
-            error = "Geçerli bir HTTPS adresi yaz."
+            error = L10n.string("Geçerli bir HTTPS adresi yaz.")
             return
         }
         error = nil

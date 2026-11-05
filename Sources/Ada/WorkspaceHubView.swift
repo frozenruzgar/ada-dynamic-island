@@ -1,20 +1,23 @@
+import AdaCore
 import SwiftUI
 
 enum IslandPage: String, CaseIterable, Identifiable {
-    case home, menu, assistant, files, system, cloud, tools, prompter
+    case home, menu, assistant, files, system, cloud, tools, prompter, player, search
 
     var id: Self { self }
 
     var title: String {
         switch self {
-        case .home: return "Ana ekran"
-        case .menu: return "Menü"
-        case .assistant: return "Asistan"
-        case .files: return "Dosyalar"
-        case .system: return "Sistem"
-        case .cloud: return "Bulut"
-        case .tools: return "Araçlar"
-        case .prompter: return "Teleprompter"
+        case .home: return L10n.string("Ana ekran")
+        case .menu: return L10n.string("Menü")
+        case .assistant: return L10n.string("Asistan")
+        case .files: return L10n.string("Dosyalar")
+        case .system: return L10n.string("Sistem")
+        case .cloud: return L10n.string("Bulut")
+        case .tools: return L10n.string("Araçlar")
+        case .prompter: return L10n.string("Teleprompter")
+        case .player: return L10n.string("Oynatıcı")
+        case .search: return L10n.string("Hızlı ara")
         }
     }
 
@@ -28,6 +31,8 @@ enum IslandPage: String, CaseIterable, Identifiable {
         case .cloud: return "icloud"
         case .tools: return "wrench.and.screwdriver"
         case .prompter: return "text.viewfinder"
+        case .player: return "waveform"
+        case .search: return "magnifyingglass"
         }
     }
 
@@ -36,9 +41,12 @@ enum IslandPage: String, CaseIterable, Identifiable {
         case .assistant: return 238
         case .system: return 305
         case .cloud: return 253
+        case .search: return 238
         default: return 0
         }
     }
+
+    var isUtility: Bool { self == .player || self == .search }
 }
 
 struct WorkspaceHubView: View {
@@ -57,7 +65,7 @@ struct WorkspaceHubView: View {
                     ForEach(rows[row]) { page in
                         tile(page.title, symbol: page.symbol) { model.selectPage(page) }
                     }
-                    if row == 1 { tile("Ayarlar", symbol: "gearshape", action: onSettings) }
+                    if row == 1 { tile(L10n.string("Ayarlar"), symbol: "gearshape", action: onSettings) }
                 }
             }
         }
@@ -68,10 +76,10 @@ struct WorkspaceHubView: View {
         Button(action: action) {
             VStack(spacing: 7) {
                 Image(systemName: symbol)
-                    .font(.system(size: 20, weight: .medium))
+                    .adaFont(size: 20, weight: .medium)
                     .foregroundStyle(model.accentColor)
                 Text(title)
-                    .font(.system(size: 12, weight: .semibold))
+                    .adaFont(size: 12, weight: .semibold)
             }
             .frame(maxWidth: .infinity, maxHeight: .infinity)
             .modifier(IslandControlSurface())

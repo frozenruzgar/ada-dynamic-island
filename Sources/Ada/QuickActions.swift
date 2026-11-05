@@ -1,3 +1,4 @@
+import AdaCore
 import AppKit
 import AVFoundation
 import Combine
@@ -7,7 +8,7 @@ import SwiftUI
 @MainActor
 final class QuickActionStore: NSObject, ObservableObject, NSWindowDelegate {
     @Published var errorMessage: String?
-    @Published private(set) var audioTitle = "Yerel müzik seç"
+    @Published private(set) var audioTitle = L10n.string("Yerel müzik seç")
     @Published private(set) var hasAudio = false
     @Published private(set) var audioPlaying = false
     @Published private(set) var cameraOpening = false
@@ -31,14 +32,14 @@ final class QuickActionStore: NSObject, ObservableObject, NSWindowDelegate {
         errorMessage = nil
         if let sharePanel { sharePanel.makeKeyAndOrderFront(nil); return }
         let picker = NSOpenPanel()
-        picker.title = "AirDrop ile gönderilecek dosyaları seç"
-        picker.message = "Alıcıyı macOS AirDrop penceresinde seçeceksin."
-        picker.prompt = "AirDrop ile paylaş"
+        picker.title = L10n.string("AirDrop ile gönderilecek dosyaları seç")
+        picker.message = L10n.string("Alıcıyı macOS AirDrop penceresinde seçeceksin.")
+        picker.prompt = L10n.string("AirDrop ile paylaş")
         picker.canChooseFiles = true
         picker.canChooseDirectories = false
         picker.allowsMultipleSelection = true
         sharePanel = picker
-        NSApp.activate(ignoringOtherApps: true)
+        NSApp.activate()
         picker.begin { [weak self] response in
             MainActor.assumeIsolated {
                 guard let self else { return }
@@ -46,7 +47,7 @@ final class QuickActionStore: NSObject, ObservableObject, NSWindowDelegate {
                 guard response == .OK, !picker.urls.isEmpty else { return }
                 guard let service = NSSharingService(named: .sendViaAirDrop),
                       service.canPerform(withItems: picker.urls) else {
-                    self.errorMessage = "AirDrop bu dosyalar için kullanılamıyor. Finder’dan AirDrop’u kontrol et."
+                    self.errorMessage = L10n.string("AirDrop bu dosyalar için kullanılamıyor. Finder’dan AirDrop’u kontrol et.")
                     return
                 }
                 self.airDropService = service
@@ -59,15 +60,15 @@ final class QuickActionStore: NSObject, ObservableObject, NSWindowDelegate {
         errorMessage = nil
         if let audioPanel { audioPanel.makeKeyAndOrderFront(nil); return }
         let picker = NSOpenPanel()
-        picker.title = "Müzik veya ses dosyası seç"
-        picker.message = "Dosya seçildikten sonra oynatmak için Başlat’a bas."
-        picker.prompt = "Seç"
+        picker.title = L10n.string("Müzik veya ses dosyası seç")
+        picker.message = L10n.string("Dosya seçildikten sonra oynatmak için Başlat’a bas.")
+        picker.prompt = L10n.string("Seç")
         picker.canChooseFiles = true
         picker.canChooseDirectories = false
         picker.allowsMultipleSelection = false
         picker.allowedContentTypes = [.mp3, .mpeg4Audio, .wav, .aiff]
         audioPanel = picker
-        NSApp.activate(ignoringOtherApps: true)
+        NSApp.activate()
         picker.begin { [weak self] response in
             MainActor.assumeIsolated {
                 guard let self else { return }
@@ -84,7 +85,7 @@ final class QuickActionStore: NSObject, ObservableObject, NSWindowDelegate {
         audioURL = url
         audioScopeHeld = url.startAccessingSecurityScopedResource()
         guard FileManager.default.isReadableFile(atPath: url.path) else {
-            errorMessage = "Bu ses dosyası okunamıyor. Başka bir dosya seç."
+            errorMessage = L10n.string("Bu ses dosyası okunamıyor. Başka bir dosya seç.")
             releaseAudioScope()
             return
         }
@@ -101,7 +102,7 @@ final class QuickActionStore: NSObject, ObservableObject, NSWindowDelegate {
             let description = item.error?.localizedDescription
             Task { @MainActor [weak self] in
                 self?.audioPlaying = false
-                self?.errorMessage = "Ses dosyası açılamadı. \(description ?? "Desteklenen başka bir dosya seç.")"
+                self?.errorMessage = L10n.string("Ses dosyası açılamadı. \(description ?? L10n.string("Desteklenen başka bir dosya seç."))")
             }
         }
         audioEndObserver = NotificationCenter.default.addObserver(forName: .AVPlayerItemDidPlayToEndTime,
@@ -112,7 +113,7 @@ final class QuickActionStore: NSObject, ObservableObject, NSWindowDelegate {
             object: item, queue: .main) { [weak self] _ in
                 MainActor.assumeIsolated {
                     self?.audioPlaying = false
-                    self?.errorMessage = "Ses dosyası oynatılırken bir sorun oluştu. Başka bir dosya seç."
+                    self?.errorMessage = L10n.string("Ses dosyası oynatılırken bir sorun oluştu. Başka bir dosya seç.")
                 }
             }
     }
@@ -133,7 +134,7 @@ final class QuickActionStore: NSObject, ObservableObject, NSWindowDelegate {
 
     func showMirror() {
         errorMessage = nil
-        if let mirrorWindow { mirrorWindow.makeKeyAndOrderFront(nil); NSApp.activate(ignoringOtherApps: true); return }
+        if let mirrorWindow { mirrorWindow.makeKeyAndOrderFront(nil); NSApp.activate(); return }
         guard !cameraOpening else { return }
         switch AVCaptureDevice.authorizationStatus(for: .video) {
         case .authorized: openMirror()
@@ -144,18 +145,18 @@ final class QuickActionStore: NSObject, ObservableObject, NSWindowDelegate {
                     guard let self else { return }
                     self.cameraOpening = false
                     if granted { self.openMirror() }
-                    else { self.errorMessage = "Kamera izni verilmedi. Sistem Ayarları → Gizlilik ve Güvenlik → Kamera bölümünden Ada’ya izin verebilirsin." }
+                    else { self.errorMessage = L10n.string("Kamera izni verilmedi. Sistem Ayarları → Gizlilik ve Güvenlik → Kamera bölümünden Ada’ya izin verebilirsin.") }
                 }
             }
         case .denied, .restricted:
-            errorMessage = "Kamera erişimi kapalı. Sistem Ayarları → Gizlilik ve Güvenlik → Kamera bölümünü kontrol et."
-        @unknown default: errorMessage = "Kamera erişim durumu okunamadı."
+            errorMessage = L10n.string("Kamera erişimi kapalı. Sistem Ayarları → Gizlilik ve Güvenlik → Kamera bölümünü kontrol et.")
+        @unknown default: errorMessage = L10n.string("Kamera erişim durumu okunamadı.")
         }
     }
 
     private func openMirror() {
         guard let device = AVCaptureDevice.default(for: .video) else {
-            errorMessage = "Kullanılabilir kamera bulunamadı."
+            errorMessage = L10n.string("Kullanılabilir kamera bulunamadı.")
             return
         }
         do {
@@ -165,7 +166,7 @@ final class QuickActionStore: NSObject, ObservableObject, NSWindowDelegate {
             let input = try AVCaptureDeviceInput(device: device)
             guard session.canAddInput(input) else {
                 session.commitConfiguration()
-                errorMessage = "Kamera başlatılamadı. Başka bir uygulamanın kamerayı kullanıp kullanmadığını kontrol et."
+                errorMessage = L10n.string("Kamera başlatılamadı. Başka bir uygulamanın kamerayı kullanıp kullanmadığını kontrol et.")
                 return
             }
             session.addInput(input)
@@ -176,24 +177,24 @@ final class QuickActionStore: NSObject, ObservableObject, NSWindowDelegate {
                 object: session, queue: .main) { [weak self] notification in
                     let failure = (notification.userInfo?[AVCaptureSessionErrorKey] as? Error)?.localizedDescription
                     MainActor.assumeIsolated {
-                        self?.errorMessage = "Kamera önizlemesi başlatılamadı. \(failure ?? "Kamerayı kullanan diğer uygulamaları kontrol et.")"
+                        self?.errorMessage = L10n.string("Kamera önizlemesi başlatılamadı. \(failure ?? L10n.string("Kamerayı kullanan diğer uygulamaları kontrol et."))")
                         self?.mirrorWindow?.close()
                     }
                 }
             let window = NSWindow(contentRect: NSRect(x: 0, y: 0, width: 520, height: 370),
                 styleMask: [.titled, .closable, .miniaturizable, .resizable], backing: .buffered, defer: false)
-            window.title = "Ada · Kamera aynası"
+            window.title = L10n.string("Ada · Kamera aynası")
             window.isReleasedWhenClosed = false
             window.minSize = NSSize(width: 360, height: 270)
             window.delegate = self
             window.contentView = NSHostingView(rootView: MirrorContentView(session: session))
             window.center()
             mirrorWindow = window
-            NSApp.activate(ignoringOtherApps: true)
+            NSApp.activate()
             window.makeKeyAndOrderFront(nil)
             driver.start()
         } catch {
-            errorMessage = "Kamera açılamadı: \(error.localizedDescription)"
+            errorMessage = L10n.string("Kamera açılamadı: \(error.localizedDescription)")
         }
     }
 
@@ -225,6 +226,9 @@ final class QuickActionStore: NSObject, ObservableObject, NSWindowDelegate {
     }
 }
 
+/// Safety: capture configuration is complete before start. All lifecycle and
+/// isRunning operations are serialized on queue; the main-actor preview only
+/// displays the session, without changing capture configuration while running.
 private final class CameraSessionDriver: @unchecked Sendable {
     let session: AVCaptureSession
     private let queue = DispatchQueue(label: "dev.ada.island.camera")
@@ -240,8 +244,8 @@ private struct MirrorContentView: View {
             MirrorPreview(session: session).background(.black)
             HStack(spacing: 7) {
                 Image(systemName: "camera.fill")
-                Text("Canlı ayna · Bu pencereyi kapatınca kamera durur.")
-                    .font(.system(size: 11))
+                Text(L10n.string("Canlı ayna · Bu pencereyi kapatınca kamera durur."))
+                    .adaFont(size: 11)
             }.foregroundStyle(.secondary).padding(12)
         }.frame(minWidth: 360, minHeight: 240)
     }

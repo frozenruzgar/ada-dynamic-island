@@ -1,0 +1,70 @@
+{
+  "sourceLanguage": "tr",
+  "strings": {
+    "NSAppleEventsUsageDescription": {
+      "localizations": {
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Spotify ve Apple Müzik’te çalan parçanın adını, sanatçısını ve kapağını adada göstermek, seçtiğin oynatma düğmelerini kullanmak için izin gerekir."
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Allow Ada to show the playing track, artist and artwork from Spotify and Apple Music and use the playback controls you select."
+          }
+        }
+      }
+    },
+    "NSCameraUsageDescription": {
+      "localizations": {
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Ayna özelliğini açtığında kamerandan önizleme göstermek için izin gerekir. Kamera görüntüsü kaydedilmez veya gönderilmez."
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Allow a camera preview when you open Mirror. Camera images are not recorded or sent anywhere."
+          }
+        }
+      }
+    },
+    "NSCalendarsFullAccessUsageDescription": {
+      "localizations": {
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Yaklaşan etkinliklerini Ada’da göstermek için takvim okuma erişimi gerekir."
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Allow Ada to read Calendar events so it can show upcoming events."
+          }
+        }
+      }
+    },
+    "NSBluetoothAlwaysUsageDescription": {
+      "localizations": {
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Bluetooth aygıtı bağlandığında Ada’da gösterge göstermek için erişim gerekir."
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Allow Ada to show an indicator when a Bluetooth device connects."
+          }
+        }
+      }
+    }
+  },
+  "version": "1.0"
+}

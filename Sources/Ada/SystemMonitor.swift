@@ -1,46 +1,8 @@
+import AdaCore
 import AppKit
 import Combine
 import Darwin
 import SwiftUI
-
-/// Successive aggregate kernel CPU tick counters, not the system load average.
-struct CPUTickSample: Equatable {
-    let user: UInt32
-    let system: UInt32
-    let idle: UInt32
-    let nice: UInt32
-
-    /// UInt32 subtraction deliberately wraps when a kernel tick counter wraps.
-    static func utilization(previous: Self, current: Self) -> Double? {
-        let user = UInt64(current.user &- previous.user)
-        let system = UInt64(current.system &- previous.system)
-        let idle = UInt64(current.idle &- previous.idle)
-        let nice = UInt64(current.nice &- previous.nice)
-        let total = user + system + idle + nice
-        guard total > 0 else { return nil }
-        return min(1, max(0, Double(user + system + nice) / Double(total)))
-    }
-}
-
-struct MemorySnapshot: Equatable {
-    let total: UInt64
-    let used: UInt64
-    let compressed: UInt64
-    let wired: UInt64
-    var fraction: Double { total > 0 ? min(1, Double(used) / Double(total)) : 0 }
-
-    /// Anonymous resident pages minus purgeable pages, plus wired and physically
-    /// occupied compressor pages. Uncompressed logical pages in the compressor
-    /// are not added; compressed memory is already a subset of `used`.
-    static func calculate(total: UInt64, pageSize: UInt64, anonymousPages: UInt64,
-                          purgeablePages: UInt64, wiredPages: UInt64, compressorPages: UInt64) -> Self {
-        let anonymous = anonymousPages > purgeablePages ? anonymousPages - purgeablePages : 0
-        let compressed = compressorPages * pageSize
-        let wired = wiredPages * pageSize
-        let used = min(total, anonymous * pageSize + wired + compressed)
-        return Self(total: total, used: used, compressed: min(total, compressed), wired: min(total, wired))
-    }
-}
 
 @MainActor
 final class SystemMonitor: ObservableObject {
@@ -63,8 +25,8 @@ final class SystemMonitor: ObservableObject {
     private var sampleIndex = 0
 
     init(startImmediately: Bool = true) {
-        modelIdentifier = Self.sysctlString("hw.model") ?? "Mac"
-        processorName = Self.sysctlString("machdep.cpu.brand_string") ?? "Apple işlemci"
+        modelIdentifier = Self.sysctlString("hw.model") ?? L10n.string("Mac")
+        processorName = Self.sysctlString("machdep.cpu.brand_string") ?? L10n.string("Apple işlemci")
         processorCount = ProcessInfo.processInfo.processorCount
         totalMemory = ProcessInfo.processInfo.physicalMemory
         if startImmediately { start() }
@@ -110,11 +72,11 @@ final class SystemMonitor: ObservableObject {
     var cpuLabel: String { cpuUsage.map { "\(Int(($0 * 100).rounded()))%" } ?? "—" }
     var thermalTitle: String {
         switch thermalState {
-        case .nominal: return "Normal"
-        case .fair: return "Orta"
-        case .serious: return "Yüksek"
-        case .critical: return "Kritik"
-        @unknown default: return "Bilinmiyor"
+        case .nominal: return L10n.string("Normal")
+        case .fair: return L10n.string("Orta")
+        case .serious: return L10n.string("Yüksek")
+        case .critical: return L10n.string("Kritik")
+        @unknown default: return L10n.string("Bilinmiyor")
         }
     }
     var thermalColor: Color {
@@ -135,7 +97,7 @@ final class SystemMonitor: ObservableObject {
         actionError = nil
         let url = URL(fileURLWithPath: "/System/Applications/Utilities/Activity Monitor.app")
         guard NSWorkspace.shared.open(url) else {
-            actionError = "Etkinlik Monitörü açılamadı. Uygulamalar > İzlenceler bölümünden açabilirsin."
+            actionError = L10n.string("Etkinlik Monitörü açılamadı. Uygulamalar > İzlenceler bölümünden açabilirsin.")
             return
         }
     }
@@ -143,7 +105,7 @@ final class SystemMonitor: ObservableObject {
     func openStorageSettings() {
         actionError = nil
         guard let url = URL(string: "x-apple.systempreferences:com.apple.settings.Storage"), NSWorkspace.shared.open(url) else {
-            actionError = "Saklama Alanı ayarları açılamadı. Sistem Ayarları > Genel > Saklama Alanı bölümünü açabilirsin."
+            actionError = L10n.string("Saklama Alanı ayarları açılamadı. Sistem Ayarları > Genel > Saklama Alanı bölümünü açabilirsin.")
             return
         }
     }
@@ -221,46 +183,46 @@ struct SystemView: View {
         VStack(alignment: .leading, spacing: 10) {
             HStack(spacing: 9) {
                 Label(monitor.processorName, systemImage: "desktopcomputer")
-                    .font(.system(size: 13, weight: .semibold)).lineLimit(1)
+                    .adaFont(size: 13, weight: .semibold).lineLimit(1)
                     .help(monitor.modelIdentifier)
                 Spacer(minLength: 8)
-                Button("Etkinlik Monitörü", action: monitor.openActivityMonitor)
-                    .font(.system(size: 10, weight: .medium)).buttonStyle(IslandButtonStyle()).foregroundStyle(.white.opacity(0.78))
+                Button(L10n.string("Etkinlik Monitörü"), action: monitor.openActivityMonitor)
+                    .adaFont(size: 10, weight: .medium).buttonStyle(IslandButtonStyle()).foregroundStyle(.white.opacity(0.78))
                 Button {
                     monitor.refresh(forceDisk: true)
                 } label: {
                     Image(systemName: "arrow.clockwise")
-                        .font(.system(size: 10, weight: .semibold))
+                        .adaFont(size: 10, weight: .semibold)
                         .foregroundStyle(accent)
                         .frame(width: 26, height: 24)
                         .background(.white.opacity(0.05), in: Capsule())
                 }
-                .buttonStyle(IslandButtonStyle()).help("Yenile").accessibilityLabel("Donanım bilgilerini yenile")
+                .buttonStyle(IslandButtonStyle()).help(L10n.string("Yenile")).accessibilityLabel(L10n.string("Donanım bilgilerini yenile"))
             }
             HStack(spacing: 10) {
                 metricCard(title: "CPU", symbol: "cpu", value: monitor.cpuLabel,
-                           detail: "\(monitor.processorCount) çekirdek", fraction: monitor.cpuUsage) {
+                           detail: L10n.string("\(monitor.processorCount) çekirdek"), fraction: monitor.cpuUsage) {
                     EmptyView()
                 }
-                metricCard(title: "Bellek", symbol: "memorychip",
+                metricCard(title: L10n.string("Bellek"), symbol: "memorychip",
                            value: monitor.memory.map { SystemMonitor.formatBytes($0.used) } ?? "—",
-                           detail: "\(SystemMonitor.formatBytes(monitor.totalMemory)) toplam", fraction: monitor.memory?.fraction) {
+                           detail: L10n.string("\(SystemMonitor.formatBytes(monitor.totalMemory)) toplam"), fraction: monitor.memory?.fraction) {
                     EmptyView()
                 }
-                metricCard(title: "Disk", symbol: "internaldrive", value: SystemMonitor.formatDisk(monitor.diskAvailable),
-                           detail: "Boş / \(SystemMonitor.formatDisk(monitor.diskTotal))", fraction: monitor.diskAvailable != nil ? monitor.diskFraction : nil) {
-                    Button("Ayarlar", action: monitor.openStorageSettings)
+                metricCard(title: L10n.string("Disk"), symbol: "internaldrive", value: SystemMonitor.formatDisk(monitor.diskAvailable),
+                           detail: L10n.string("Boş / \(SystemMonitor.formatDisk(monitor.diskTotal))"), fraction: monitor.diskAvailable != nil ? monitor.diskFraction : nil) {
+                    Button(L10n.string("Ayarlar"), action: monitor.openStorageSettings)
                         .foregroundStyle(accent).buttonStyle(IslandButtonStyle())
-                        .accessibilityLabel("Saklama alanı ayarlarını aç")
+                        .accessibilityLabel(L10n.string("Saklama alanı ayarlarını aç"))
                 }
                 thermalCard
             }.frame(maxHeight: .infinity)
             if let error = monitor.actionError {
                 HStack(spacing: 8) {
                     Label(error, systemImage: "exclamationmark.circle")
-                        .font(.system(size: 10)).foregroundStyle(.orange).lineLimit(2)
+                        .adaFont(size: 10).foregroundStyle(.orange).lineLimit(2)
                     Spacer(minLength: 6)
-                    Button("Kapat") { monitor.actionError = nil }.font(.system(size: 10)).buttonStyle(IslandButtonStyle())
+                    Button(L10n.string("Kapat")) { monitor.actionError = nil }.adaFont(size: 10).buttonStyle(IslandButtonStyle())
                 }
             }
         }.foregroundStyle(.white)
@@ -269,11 +231,11 @@ struct SystemView: View {
     private func metricCard<Footer: View>(title: String, symbol: String, value: String, detail: String,
                                           fraction: Double?, @ViewBuilder footer: () -> Footer) -> some View {
         VStack(alignment: .leading, spacing: 6) {
-            Label(title, systemImage: symbol).font(.system(size: 11, weight: .semibold)).foregroundStyle(.white.opacity(0.65))
+            Label(title, systemImage: symbol).adaFont(size: 11, weight: .semibold).foregroundStyle(.white.opacity(0.65))
             Spacer(minLength: 0)
-            Text(value).font(.system(size: title == "CPU" ? 29 : 24, weight: .medium, design: .rounded))
-                .monospacedDigit().minimumScaleFactor(0.7).lineLimit(1)
-            Text(detail).font(.system(size: 10)).foregroundStyle(.white.opacity(0.5)).lineLimit(1)
+            Text(value).adaFont(size: title == "CPU" ? 29 : 24, weight: .medium, design: .rounded)
+                .monospacedDigit().lineLimit(1)
+            Text(detail).adaFont(size: 10).foregroundStyle(Palette.tertiaryText).lineLimit(1)
             GeometryReader { proxy in
                 ZStack(alignment: .leading) {
                     Capsule().fill(.white.opacity(0.07))
@@ -286,11 +248,10 @@ struct SystemView: View {
             .frame(height: 3)
             .accessibilityHidden(true)
             Spacer(minLength: 0)
-            footer().font(.system(size: 10)).lineLimit(1)
+            footer().adaFont(size: 10).lineLimit(1)
         }
         .padding(13).frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .leading)
-        .background(glassFill, in: RoundedRectangle(cornerRadius: 17))
-        .overlay(RoundedRectangle(cornerRadius: 17).strokeBorder(.white.opacity(0.085), lineWidth: 0.65).allowsHitTesting(false))
+        .islandCardSurface(fill: AnyShapeStyle(glassFill), lineWidth: 0.65)
         .help(metricHelp(title))
     }
 
@@ -300,32 +261,31 @@ struct SystemView: View {
 
     private func metricHelp(_ title: String) -> String {
         switch title {
-        case "Bellek":
+        case L10n.string("Bellek"):
             let compressed = monitor.memory.map { SystemMonitor.formatBytes($0.compressed) } ?? "—"
-            return "Sıkıştırılmış bellek: \(compressed). Kullanım buna ek olarak uygulamaların ve sistemin ayırdığı belleği içerir."
-        case "Disk":
-            return "macOS’un kullanılabilir saydığı alan. Çubuk diskin doluluk oranını gösterir."
+            return L10n.string("Sıkıştırılmış bellek: \(compressed). Kullanım buna ek olarak uygulamaların ve sistemin ayırdığı belleği içerir.")
+        case L10n.string("Disk"):
+            return L10n.string("macOS’un kullanılabilir saydığı alan. Çubuk diskin doluluk oranını gösterir.")
         default:
-            return "Tüm çekirdeklerdeki toplam işlemci kullanımı. İki saniyede bir ölçülür."
+            return L10n.string("Tüm çekirdeklerdeki toplam işlemci kullanımı. İki saniyede bir ölçülür.")
         }
     }
 
     private var thermalCard: some View {
         VStack(alignment: .leading, spacing: 7) {
-            Label("Isıl durum", systemImage: "gauge.with.dots.needle.33percent")
-                .font(.system(size: 11, weight: .semibold)).foregroundStyle(.white.opacity(0.65))
+            Label(L10n.string("Isıl durum"), systemImage: "gauge.with.dots.needle.33percent")
+                .adaFont(size: 11, weight: .semibold).foregroundStyle(.white.opacity(0.65))
             Spacer(minLength: 0)
             HStack(spacing: 6) {
                 Circle().fill(monitor.thermalColor).frame(width: 6, height: 6)
-                Text(monitor.thermalTitle).font(.system(size: 19, weight: .medium))
+                Text(monitor.thermalTitle).adaFont(size: 19, weight: .medium)
             }
             Spacer(minLength: 0)
-            Label(monitor.lowPowerMode ? "Düşük güç" : "Standart güç", systemImage: "leaf")
-                .font(.system(size: 10)).foregroundStyle(monitor.lowPowerMode ? .mint : .white.opacity(0.55))
+            Label(monitor.lowPowerMode ? L10n.string("Düşük güç") : L10n.string("Standart güç"), systemImage: "leaf")
+                .adaFont(size: 10).foregroundStyle(monitor.lowPowerMode ? .mint : Palette.tertiaryText)
         }
         .padding(13).frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .leading)
-        .background(glassFill, in: RoundedRectangle(cornerRadius: 17))
-        .overlay(RoundedRectangle(cornerRadius: 17).strokeBorder(.white.opacity(0.085), lineWidth: 0.65).allowsHitTesting(false))
-        .help("macOS’un bildirdiği ısıl durum.")
+        .islandCardSurface(fill: AnyShapeStyle(glassFill), lineWidth: 0.65)
+        .help(L10n.string("macOS’un bildirdiği ısıl durum."))
     }
 }

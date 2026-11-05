@@ -1,0 +1,5 @@
+// Generated from InfoPlist.xcstrings; edit the catalog instead.
+"NSAppleEventsUsageDescription" = "Allow Ada to show the playing track, artist and artwork from Spotify and Apple Music and use the playback controls you select.";
+"NSBluetoothAlwaysUsageDescription" = "Allow Ada to show an indicator when a Bluetooth device connects.";
+"NSCalendarsFullAccessUsageDescription" = "Allow Ada to read Calendar events so it can show upcoming events.";
+"NSCameraUsageDescription" = "Allow a camera preview when you open Mirror. Camera images are not recorded or sent anywhere.";
