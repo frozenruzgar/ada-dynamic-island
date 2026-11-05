@@ -1,7 +1,7 @@
 import Foundation
 
 /// Uses a deadline rather than decrementing ticks, so sleep and delayed callbacks do not lose time.
-public struct FocusClock: Codable, Equatable {
+public struct FocusClock: Codable, Equatable, Sendable {
     public private(set) var duration: TimeInterval
     public private(set) var pausedRemaining: TimeInterval
     public private(set) var deadline: Date?

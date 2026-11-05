@@ -1,3 +1,4 @@
+import AdaCore
 import AppKit
 import SwiftUI
 
@@ -16,9 +17,9 @@ struct CloudWebService: Identifiable {
 
     static let all: [CloudWebService] = [
         .init(id: "icloud", name: "iCloud", symbol: "icloud", url: URL(string: "https://www.icloud.com/")!),
-        .init(id: "drive", name: "Google Drive", symbol: "externaldrive", url: URL(string: "https://drive.google.com/")!),
-        .init(id: "dropbox", name: "Dropbox", symbol: "shippingbox", url: URL(string: "https://www.dropbox.com/")!),
-        .init(id: "onedrive", name: "OneDrive", symbol: "cloud", url: URL(string: "https://onedrive.live.com/")!)
+        .init(id: "drive", name: L10n.string("Google Drive"), symbol: "externaldrive", url: URL(string: "https://drive.google.com/")!),
+        .init(id: "dropbox", name: L10n.string("Dropbox"), symbol: "shippingbox", url: URL(string: "https://www.dropbox.com/")!),
+        .init(id: "onedrive", name: L10n.string("OneDrive"), symbol: "cloud", url: URL(string: "https://onedrive.live.com/")!)
     ]
 }
 
@@ -60,15 +61,15 @@ final class CloudWorkspaceStore: ObservableObject {
         errorMessage = nil
         if let folderPicker { folderPicker.makeKeyAndOrderFront(nil); return }
         let picker = NSOpenPanel()
-        picker.title = "Klasör seç"
-        picker.prompt = "Kısayol ekle"
+        picker.title = L10n.string("Klasör seç")
+        picker.prompt = L10n.string("Kısayol ekle")
         picker.canChooseDirectories = true
         picker.canChooseFiles = false
         picker.canCreateDirectories = false
         picker.allowsMultipleSelection = true
         folderPicker = picker
         choosingFolder = true
-        NSApp.activate(ignoringOtherApps: true)
+        NSApp.activate()
         picker.begin { [weak self] response in
             MainActor.assumeIsolated {
                 guard let self else { return }
@@ -103,7 +104,7 @@ final class CloudWorkspaceStore: ObservableObject {
             favorites.append(CloudFavoriteFolder(name: name, bookmark: bookmark, fallbackPath: url.path))
         }
         persist()
-        if rejected { errorMessage = "Bazı klasörler eklenemedi." }
+        if rejected { errorMessage = L10n.string("Bazı klasörler eklenemedi.") }
     }
 
     func removeFavorite(_ id: UUID) {
@@ -122,7 +123,7 @@ final class CloudWorkspaceStore: ObservableObject {
         let scoped = url.startAccessingSecurityScopedResource()
         defer { if scoped { url.stopAccessingSecurityScopedResource() } }
         guard folderExists(url) else {
-            errorMessage = "“\(favorite.name)” bulunamadı. Kısayolu yeniden ekle."
+            errorMessage = L10n.string("“\(favorite.name)” bulunamadı. Kısayolu yeniden ekle.")
             return
         }
         errorMessage = nil
@@ -132,7 +133,7 @@ final class CloudWorkspaceStore: ObservableObject {
     func openICloudDrive() {
         refreshAvailability()
         guard iCloudDriveAvailable else {
-            errorMessage = "iCloud Drive klasörü bulunamadı."
+            errorMessage = L10n.string("iCloud Drive klasörü bulunamadı.")
             return
         }
         openFolder(iCloudDriveURL)
@@ -143,7 +144,7 @@ final class CloudWorkspaceStore: ObservableObject {
     func openWeb(_ service: CloudWebService) {
         guard service.url.scheme == "https", CloudWebService.all.contains(where: { $0.url == service.url }) else { return }
         errorMessage = nil
-        if !NSWorkspace.shared.open(service.url) { errorMessage = "Tarayıcı açılamadı." }
+        if !NSWorkspace.shared.open(service.url) { errorMessage = L10n.string("Tarayıcı açılamadı.") }
     }
 
     private func resolve(_ favorite: CloudFavoriteFolder) -> URL? {
@@ -164,7 +165,7 @@ final class CloudWorkspaceStore: ObservableObject {
         }
         let fallback = URL(fileURLWithPath: favorite.fallbackPath, isDirectory: true)
         guard folderExists(fallback) else {
-            errorMessage = "“\(favorite.name)” açılamadı. Kısayolu yeniden ekle."
+            errorMessage = L10n.string("“\(favorite.name)” açılamadı. Kısayolu yeniden ekle.")
             return nil
         }
         return fallback
@@ -188,9 +189,9 @@ final class CloudWorkspaceStore: ObservableObject {
     private func openFolder(_ url: URL) {
         let scoped = url.startAccessingSecurityScopedResource()
         defer { if scoped { url.stopAccessingSecurityScopedResource() } }
-        guard folderExists(url) else { errorMessage = "Klasör bulunamadı veya erişilemiyor."; return }
+        guard folderExists(url) else { errorMessage = L10n.string("Klasör bulunamadı veya erişilemiyor."); return }
         errorMessage = nil
-        if !NSWorkspace.shared.open(url) { errorMessage = "Klasör Finder’da açılamadı." }
+        if !NSWorkspace.shared.open(url) { errorMessage = L10n.string("Klasör Finder’da açılamadı.") }
     }
 
     private func folderExists(_ url: URL) -> Bool {
@@ -217,9 +218,9 @@ struct CloudWorkspaceView: View {
             if let error = store.errorMessage {
                 HStack(spacing: 7) {
                     Image(systemName: "exclamationmark.circle.fill").foregroundStyle(.orange)
-                    Text(error).font(.system(size: 10)).lineLimit(2)
+                    Text(error).adaFont(size: 10).lineLimit(2)
                     Spacer(minLength: 0)
-                    Button("Kapat", action: store.clearError).buttonStyle(IslandButtonStyle()).foregroundStyle(accent)
+                    Button(L10n.string("Kapat"), action: store.clearError).buttonStyle(IslandButtonStyle()).foregroundStyle(accent)
                 }
             }
         }
@@ -229,27 +230,27 @@ struct CloudWorkspaceView: View {
 
     private var localPlaces: some View {
         VStack(alignment: .leading, spacing: 9) {
-            Text("Bu Mac").font(.system(size: 11, weight: .semibold)).foregroundStyle(.white.opacity(0.6))
-            locationButton("iCloud Drive", subtitle: store.iCloudDriveAvailable ? nil : "Bu Mac’te yok",
+            Text(L10n.string("Bu Mac")).adaFont(size: 11, weight: .semibold).foregroundStyle(.white.opacity(0.6))
+            locationButton(L10n.string("iCloud Drive"), subtitle: store.iCloudDriveAvailable ? nil : L10n.string("Bu Mac’te yok"),
                            symbol: "icloud", action: store.openICloudDrive)
-            locationButton("İndirilenler", symbol: "arrow.down.circle", action: store.openDownloads)
+            locationButton(L10n.string("İndirilenler"), symbol: "arrow.down.circle", action: store.openDownloads)
         }.cloudCard()
     }
 
     private var favoriteFolders: some View {
         VStack(alignment: .leading, spacing: 9) {
             HStack {
-                Label("Sabit klasörler", systemImage: "pin").font(.system(size: 11, weight: .semibold))
+                Label(L10n.string("Sabit klasörler"), systemImage: "pin").adaFont(size: 11, weight: .semibold)
                 Spacer()
                 Button(action: store.chooseFolders) {
-                    Label("Ekle", systemImage: "plus").font(.system(size: 10, weight: .medium))
+                    Label(L10n.string("Ekle"), systemImage: "plus").adaFont(size: 10, weight: .medium)
                 }.buttonStyle(IslandButtonStyle()).foregroundStyle(accent)
             }
             if store.favorites.isEmpty {
                 VStack(spacing: 7) {
-                    Image(systemName: "folder.badge.plus").font(.system(size: 24, weight: .light)).foregroundStyle(accent.opacity(0.7))
-                    Text("Henüz klasör yok")
-                        .font(.system(size: 11, weight: .medium)).foregroundStyle(.white.opacity(0.62))
+                    Image(systemName: "folder.badge.plus").adaFont(size: 24, weight: .light).foregroundStyle(accent.opacity(0.7))
+                    Text(L10n.string("Henüz klasör yok"))
+                        .adaFont(size: 11, weight: .medium).foregroundStyle(.white.opacity(0.62))
                 }.frame(maxWidth: .infinity, maxHeight: .infinity)
             } else {
                 ScrollView {
@@ -261,20 +262,20 @@ struct CloudWorkspaceView: View {
                                         Image(systemName: "folder.fill").foregroundStyle(accent)
                                         Text(folder.name).lineLimit(1)
                                         Spacer(minLength: 0)
-                                        Image(systemName: "arrow.up.right").font(.system(size: 8)).foregroundStyle(.white.opacity(0.35))
+                                        Image(systemName: "arrow.up.right").adaFont(size: 8).foregroundStyle(Palette.tertiaryText)
                                     }.contentShape(Rectangle())
                                 }.buttonStyle(IslandButtonStyle())
                                 Button { store.removeFavorite(folder.id) } label: {
-                                    Image(systemName: "xmark").font(.system(size: 8)).foregroundStyle(.white.opacity(0.35))
-                                }.buttonStyle(IslandButtonStyle()).help("Kısayolu kaldır").accessibilityLabel("\(folder.name) kısayolunu kaldır")
+                                    Image(systemName: "xmark").adaFont(size: 8).foregroundStyle(Palette.tertiaryText)
+                                }.buttonStyle(IslandButtonStyle()).help(L10n.string("Kısayolu kaldır")).accessibilityLabel(L10n.string("\(folder.name) kısayolunu kaldır"))
                             }
-                            .font(.system(size: 11, weight: .medium)).padding(7)
+                            .adaFont(size: 11, weight: .medium).padding(7)
                             .background(.white.opacity(0.025), in: RoundedRectangle(cornerRadius: 9))
                             .contextMenu {
-                                Button("Finder’da aç") { store.openFavorite(folder) }
-                                Button("Finder’da göster") { store.revealFavorite(folder) }
+                                Button(L10n.string("Finder’da aç")) { store.openFavorite(folder) }
+                                Button(L10n.string("Finder’da göster")) { store.revealFavorite(folder) }
                                 Divider()
-                                Button("Kısayolu kaldır") { store.removeFavorite(folder.id) }
+                                Button(L10n.string("Kısayolu kaldır")) { store.removeFavorite(folder.id) }
                             }
                         }
                     }
@@ -285,16 +286,16 @@ struct CloudWorkspaceView: View {
 
     private var webServices: some View {
         VStack(alignment: .leading, spacing: 7) {
-            Text("Web kısayolları").font(.system(size: 11, weight: .semibold)).foregroundStyle(.white.opacity(0.6))
+            Text(L10n.string("Web kısayolları")).adaFont(size: 11, weight: .semibold).foregroundStyle(.white.opacity(0.6))
             ForEach(CloudWebService.all) { service in
                 Button { store.openWeb(service) } label: {
                     HStack(spacing: 8) {
                         Image(systemName: service.symbol).frame(width: 16).foregroundStyle(accent)
-                        Text(service.name).font(.system(size: 11, weight: .medium))
+                        Text(service.name).adaFont(size: 11, weight: .medium)
                         Spacer()
-                        Image(systemName: "arrow.up.right").font(.system(size: 8)).foregroundStyle(.white.opacity(0.55))
+                        Image(systemName: "arrow.up.right").adaFont(size: 8).foregroundStyle(Palette.tertiaryText)
                     }.padding(.vertical, 3).contentShape(Rectangle())
-                }.buttonStyle(IslandButtonStyle()).help("\(service.name) web sitesini aç")
+                }.buttonStyle(IslandButtonStyle()).help(L10n.string("\(service.name) web sitesini aç"))
             }
         }.cloudCard()
     }
@@ -302,17 +303,17 @@ struct CloudWorkspaceView: View {
     private func locationButton(_ title: String, subtitle: String? = nil, symbol: String, action: @escaping () -> Void) -> some View {
         Button(action: action) {
             HStack(spacing: 9) {
-                Image(systemName: symbol).font(.system(size: 18)).foregroundStyle(accent)
+                Image(systemName: symbol).adaFont(size: 18).foregroundStyle(accent)
                 VStack(alignment: .leading, spacing: 3) {
-                    Text(title).font(.system(size: 11, weight: .semibold))
+                    Text(title).adaFont(size: 11, weight: .semibold)
                     if let subtitle {
-                        Text(subtitle).font(.system(size: 10)).foregroundStyle(.white.opacity(0.60))
+                        Text(subtitle).adaFont(size: 10).foregroundStyle(.white.opacity(0.60))
                     }
                 }
                 Spacer(minLength: 0)
             }
             .padding(9).background(.white.opacity(0.025), in: RoundedRectangle(cornerRadius: 11))
-        }.buttonStyle(IslandButtonStyle()).help("\(title) klasörünü Finder’da aç")
+        }.buttonStyle(IslandButtonStyle()).help(L10n.string("\(title) klasörünü Finder’da aç"))
     }
 }
 
@@ -320,8 +321,7 @@ private struct CloudCard: ViewModifier {
     func body(content: Content) -> some View {
         content.padding(12)
             .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
-            .background(.white.opacity(0.04), in: RoundedRectangle(cornerRadius: 17))
-            .overlay(RoundedRectangle(cornerRadius: 17).strokeBorder(.white.opacity(0.08), lineWidth: 0.8))
+            .islandCardSurface()
     }
 }
 

@@ -1,3 +1,4 @@
+import AdaCore
 import SwiftUI
 
 /// Expands like the video reference; bordered buttons add adaptive window chrome.

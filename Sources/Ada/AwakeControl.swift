@@ -1,3 +1,4 @@
+import AdaCore
 import AppKit
 import IOKit.pwr_mgt
 import SwiftUI
@@ -12,7 +13,7 @@ final class AwakeStore: ObservableObject {
     private var ticker: Timer?
     var active: Bool { until != nil }
     var label: String {
-        guard let until else { return "Kapalı" }
+        guard let until else { return L10n.string("Kapalı") }
         let remaining = max(0, Int(ceil(until.timeIntervalSince(now))))
         return String(format: "%02d:%02d", remaining / 60, remaining % 60)
     }
@@ -21,8 +22,8 @@ final class AwakeStore: ObservableObject {
         error = nil
         var identifier: IOPMAssertionID = 0
         let result = IOPMAssertionCreateWithName(kIOPMAssertionTypePreventUserIdleDisplaySleep as CFString,
-            IOPMAssertionLevel(kIOPMAssertionLevelOn), "Ada: süreli ekran uykusunu önleme" as CFString, &identifier)
-        guard result == kIOReturnSuccess else { error = "Uyku önleme başlatılamadı."; return }
+            IOPMAssertionLevel(kIOPMAssertionLevelOn), L10n.string("Ada: süreli ekran uykusunu önleme") as CFString, &identifier)
+        guard result == kIOReturnSuccess else { error = L10n.string("Uyku önleme başlatılamadı."); return }
         assertion = identifier
         now = Date()
         until = now.addingTimeInterval(TimeInterval(min(120, max(1, minutes)) * 60))
@@ -50,19 +51,19 @@ struct AwakeControlView: View {
     var body: some View {
         HStack(spacing: 12) {
             Image(systemName: store.active ? "cup.and.saucer.fill" : "cup.and.saucer")
-                .font(.system(size: 19)).foregroundStyle(store.active ? accent : .white.opacity(0.6))
+                .adaFont(size: 19).foregroundStyle(store.active ? accent : .white.opacity(0.6))
             VStack(alignment: .leading, spacing: 3) {
-                Text("Uyanık tut").font(.system(size: 12, weight: .semibold))
-                Text(store.error ?? (store.active ? "Etkin · \(store.label)" : "Ekran uykusunu ertele"))
-                    .font(.system(size: 10)).foregroundStyle(.white.opacity(0.45))
+                Text(L10n.string("Uyanık tut")).adaFont(size: 12, weight: .semibold)
+                Text(store.error ?? (store.active ? L10n.string("Etkin · \(store.label)") : L10n.string("Ekran uykusunu ertele")))
+                    .adaFont(size: 10).foregroundStyle(Palette.tertiaryText)
             }
             Spacer(minLength: 6)
-            Picker("Süre", selection: $store.minutes) {
-                ForEach([15, 30, 60, 120], id: \.self) { minutes in Text("\(minutes) dk").tag(minutes) }
+            Picker(L10n.string("Süre"), selection: $store.minutes) {
+                ForEach([15, 30, 60, 120], id: \.self) { minutes in Text(L10n.string("\(minutes) dk")).tag(minutes) }
             }.labelsHidden().frame(width: 90).disabled(store.active)
             Button { store.active ? store.stop() : store.start() } label: {
-                Text(store.active ? "Durdur" : "Başlat")
-                    .font(.system(size: 11, weight: .semibold))
+                Text(store.active ? L10n.string("Durdur") : L10n.string("Başlat"))
+                    .adaFont(size: 11, weight: .semibold)
                     .padding(.horizontal, 14).padding(.vertical, 7)
                     .foregroundStyle(store.active ? .white : .black)
                     .background(store.active ? .white.opacity(0.12) : accent, in: Capsule())
@@ -71,6 +72,6 @@ struct AwakeControlView: View {
         }
         .padding(.horizontal, 14).padding(.vertical, 10)
         .background(.white.opacity(0.045), in: RoundedRectangle(cornerRadius: 14))
-        .help("Süre sonunda ve Ada kapandığında bırakılır. Elle Uyut ve kapağı kapatma normal çalışır.")
+        .help(L10n.string("Süre sonunda ve Ada kapandığında bırakılır. Elle Uyut ve kapağı kapatma normal çalışır."))
     }
 }

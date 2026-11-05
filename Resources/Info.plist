@@ -1,18 +1,45 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
-<plist version="1.0"><dict>
-    <key>CFBundleName</key><string>Ada</string>
-    <key>CFBundleDisplayName</key><string>Ada</string>
-    <key>CFBundleIdentifier</key><string>dev.ada.island</string>
-    <key>CFBundleExecutable</key><string>Ada</string>
-    <key>CFBundlePackageType</key><string>APPL</string>
-    <key>CFBundleShortVersionString</key><string>0.9.1</string>
-    <key>CFBundleVersion</key><string>14</string>
-    <key>LSMinimumSystemVersion</key><string>14.0</string>
-    <key>LSUIElement</key><true/>
-    <key>NSSupportsAutomaticTermination</key><false/>
-    <key>NSHighResolutionCapable</key><true/>
-    <key>NSAppleEventsUsageDescription</key><string>Spotify ve Apple Müzik’te çalan parçanın adını, sanatçısını ve kapağını adada göstermek, seçtiğin oynatma düğmelerini kullanmak için izin gerekir.</string>
-    <key>CFBundleIconFile</key><string>AppIcon</string>
-<key>NSCameraUsageDescription</key><string>Ayna özelliğini açtığında kamerandan önizleme göstermek için izin gerekir. Kamera görüntüsü kaydedilmez veya gönderilmez.</string>
-</dict></plist>
+<plist version="1.0">
+<dict>
+	<key>CFBundleDevelopmentRegion</key>
+	<string>tr</string>
+	<key>CFBundleDisplayName</key>
+	<string>Ada</string>
+	<key>CFBundleExecutable</key>
+	<string>Ada</string>
+	<key>CFBundleIconFile</key>
+	<string>AppIcon</string>
+	<key>CFBundleIdentifier</key>
+	<string>io.github.frozenruzgar.ada</string>
+	<key>CFBundleLocalizations</key>
+	<array>
+		<string>tr</string>
+		<string>en</string>
+	</array>
+	<key>CFBundleName</key>
+	<string>Ada</string>
+	<key>CFBundlePackageType</key>
+	<string>APPL</string>
+	<key>CFBundleShortVersionString</key>
+	<string>0.12.0</string>
+	<key>CFBundleVersion</key>
+	<string>26</string>
+	<key>LSMinimumSystemVersion</key>
+	<string>14.0</string>
+	<key>LSUIElement</key>
+	<true/>
+	<key>NSAppleEventsUsageDescription</key>
+	<string>Spotify ve Apple Müzik’te çalan parçanın adını, sanatçısını ve kapağını adada göstermek, seçtiğin oynatma düğmelerini kullanmak için izin gerekir.</string>
+	<key>NSCalendarsFullAccessUsageDescription</key>
+	<string>Yaklaşan etkinliklerini Ada’da göstermek için takvim okuma erişimi gerekir.</string>
+	<key>NSBluetoothAlwaysUsageDescription</key>
+	<string>Bluetooth aygıtı bağlandığında Ada’da gösterge göstermek için erişim gerekir.</string>
+	<key>NSCameraUsageDescription</key>
+	<string>Ayna özelliğini açtığında kamerandan önizleme göstermek için izin gerekir. Kamera görüntüsü kaydedilmez veya gönderilmez.</string>
+	<key>NSHighResolutionCapable</key>
+	<true/>
+	<key>NSSupportsAutomaticTermination</key>
+	<false/>
+</dict>
+</plist>

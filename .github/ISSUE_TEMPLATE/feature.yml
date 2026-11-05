@@ -1,0 +1,18 @@
+name: Özellik isteği
+description: İşini kolaylaştıracak somut bir kullanım öner.
+body:
+  - type: textarea
+    id: problem
+    attributes:
+      label: Hangi işi yapmak istiyorsun?
+    validations:
+      required: true
+  - type: textarea
+    id: behavior
+    attributes:
+      label: Beklediğin davranış
+  - type: textarea
+    id: permissions
+    attributes:
+      label: Gizlilik veya izin beklentin
+      description: Kişisel bilgi veya hesap verisi paylaşma.

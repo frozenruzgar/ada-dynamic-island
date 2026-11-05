@@ -1,0 +1,32 @@
+name: Hata bildirimi
+description: Ada’da karşılaştığın bir sorunu bildir.
+body:
+  - type: input
+    id: version
+    attributes:
+      label: Ada sürümü
+    validations:
+      required: true
+  - type: input
+    id: system
+    attributes:
+      label: macOS sürümü ve Mac modeli / işlemcisi
+    validations:
+      required: true
+  - type: dropdown
+    id: notch
+    attributes:
+      label: Çentik var mı?
+      options: ['Evet', 'Hayır']
+  - type: textarea
+    id: displays
+    attributes:
+      label: Ekran düzeni
+      description: Dahili/harici ekranlar, ana ekran ve tam ekran kullanımı.
+  - type: textarea
+    id: steps
+    attributes:
+      label: Yeniden üretme adımları, beklenen ve gerçekleşen davranış
+      description: Özel dosya, not, hesap bilgisi veya erişim anahtarı ekleme.
+    validations:
+      required: true
