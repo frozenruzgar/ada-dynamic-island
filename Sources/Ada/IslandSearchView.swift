@@ -225,19 +225,23 @@ struct IslandSearchView: View {
             candidates.append(.note(String(workspace.note.prefix(20_000))))
         }
         let calculation = CommandCalculation.evaluate(query).map { [Result.calculation($0)] } ?? []
-        return calculation + candidates.enumerated().compactMap { index, result -> (index: Int, rank: Int, result: Result)? in
+        var ranked: [(index: Int, rank: Int, result: Result)] = []
+        for (index, result) in candidates.enumerated() {
             let title = Self.fold(result.title)
             let searchable = title + " " + Self.fold(result.keywords)
-            guard words.allSatisfy({ searchable.contains($0) }) else { return nil }
+            guard words.allSatisfy({ searchable.contains($0) }) else { continue }
             let rank: Int
             if title == normalizedQuery { rank = 0 }
             else if title.hasPrefix(normalizedQuery) { rank = 1 }
             else if words.allSatisfy({ title.contains($0) }) { rank = 2 }
             else { rank = 3 }
-            return (index, rank, result)
+            ranked.append((index, rank, result))
         }
-        .sorted { ($0.rank, $0.index) < ($1.rank, $1.index) }
-        .prefix(40).map(\.result)
+        ranked.sort {
+            if $0.rank != $1.rank { return $0.rank < $1.rank }
+            return $0.index < $1.index
+        }
+        return calculation + ranked.prefix(40).map { $0.result }
     }
 
     private static func fold(_ value: String) -> String {
