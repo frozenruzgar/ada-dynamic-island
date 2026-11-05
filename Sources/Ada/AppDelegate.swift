@@ -272,10 +272,10 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         }
     }
 
-    private func openFromShortcut(to page: IslandPage? = nil) {
+    private func openFromShortcut(to page: IslandPage? = nil, rememberPage: Bool = true) {
         // Give keyboard users time to reach the panel from another part of the screen.
         hover.holdOpenUntil = Date().addingTimeInterval(4)
-        if let page { model.selectPage(page) }
+        if let page { model.selectPage(page, remember: rememberPage) }
         expand(to: page)
         hover.keyboardHeld = true
         panel.makeKey()
@@ -286,7 +286,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         else { openFromShortcut() }
     }
 
-    @objc private func openFilesFromShortcut() { openFromShortcut(to: .files) }
+    @objc private func openFilesFromShortcut() { openFromShortcut(to: .files, rememberPage: false) }
     @objc private func openAssistant() { openFromShortcut(to: .assistant) }
     @objc private func openSystem() { openFromShortcut(to: .system) }
     @objc private func openCloud() { openFromShortcut(to: .cloud) }

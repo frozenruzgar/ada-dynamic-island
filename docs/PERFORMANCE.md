@@ -14,3 +14,16 @@ Yeni örnekte mouse idle süresi 74,581 → 84,586 saniyeydi; örnek boyunca far
 `top` kısa CPU örnekleri eski sürümde %0,3–0,7, yenide %0,5–1,7 aralığındaydı. Bu ölçüm CPU iyileşmesi iddiasını desteklemez. Sabit pil ömrü kazancı iddia edilmez. Panel açıkken çıkış takibi hâlâ 60 ms’dir; kapalı panelde mouse-only olay izleyicisi kullanılır, küresel izleme kurulamazsa 200 ms yedek çalışır.
 
 PR açıklaması için: Kapalı panelin sürekli fare zamanlayıcısı kaldırıldı. Aynı Mac’te kısa boşta örnekler 18,5 → 2,6 interrupt wakeup/sn gösterdi; tekrarlanabilir uzun enerji ölçümü henüz yapılmadı.
+
+
+## Açık ana ekran
+
+Aynı Apple Silicon Mac ve macOS 26.3 üzerinde, ana ekran açık ve sabitlenmişken yaklaşık 10 saniyelik üç örnek alındı. Her örnekte fare hareketsizdi.
+
+| Sürüm | Açık panel yedek aralığı | Uyandırma/sn |
+| --- | ---: | ---: |
+| 0.11.1 | 60 ms | 16,64 |
+| 0.12.0 ilk paket | 60 ms | 16,72 |
+| 0.12.0 güncel paket | 120 ms | 8,47 |
+
+Fare hareketi olaylardan alınmaya devam ediyor. Geometri yalnızca ekran veya yerleşim değiştiğinde yeniden okunuyor. Yedek yoklama sabit imleç, kapanma gecikmesi ve biten pencere animasyonu gibi durumları takip ediyor. Bunlar kısa süreç sayacı örnekleri. Pil ömrü veya farklı donanımlardaki tüketim ayrıca ölçülmelidir.

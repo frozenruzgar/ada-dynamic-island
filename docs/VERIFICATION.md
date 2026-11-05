@@ -10,3 +10,5 @@
 - Yerel paket Apple Silicon içindir. Developer ID imzası ve noter onayı ayrı yayın gereksinimleridir.
 
 [Performans ölçümleri](PERFORMANCE.md) · [Paketleme ve yayın](RELEASE.md)
+
+0.12.0 Apple Silicon Mac üzerinde yeni kimlikle başlatıldı. Mevcut not ve raf kaydı kopyaları karşılaştırıldı. Arayüzde başlangıç rehberi, klavyeyle panel açılışı, ayrı Dosyalar kısayolu, hesap sonucu ve yeni giriş öğesi kaydı gözlendi.

@@ -18,11 +18,11 @@ final class IslandModel: ObservableObject {
     }
     @Published private(set) var pageBeforeUtility: IslandPage = .home
 
-    func selectPage(_ page: IslandPage) {
+    func selectPage(_ page: IslandPage, remember: Bool = true) {
         if page.isUtility { openUtility(page); return }
         // Only explicit navigation changes the page remembered across openings.
         let startup = IslandStartPage(rawValue: page.rawValue) ?? .home
-        if preferences.startupPage != startup { preferences.startupPage = startup }
+        if remember && preferences.startupPage != startup { preferences.startupPage = startup }
         self.page = page
     }
 

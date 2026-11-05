@@ -34,6 +34,9 @@ enum ClockModelChecks {
         island.soundEnabled = false
         precondition(!defaults.bool(forKey: "soundEnabled") && structuralChanges == 2)
         island.shutdown()
+        island.selectPage(.home)
+        island.selectPage(.files, remember: false)
+        precondition(island.page == .files && island.preferences.startupPage == .home)
         print("PASS: clock ticks isolated from structural callbacks, idle/pause timers stopped, completion once and persisted break state")
     }
 }
