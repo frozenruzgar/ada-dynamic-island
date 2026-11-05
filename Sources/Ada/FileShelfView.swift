@@ -1,6 +1,7 @@
 import AppKit
 import SwiftUI
-import QuickLookThumbnailing
+// Older SDKs lack the sendability annotations on Quick Look results.
+@preconcurrency import QuickLookThumbnailing
 import UniformTypeIdentifiers
 
 struct FileShelfView: View {

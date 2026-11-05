@@ -195,10 +195,18 @@ struct IslandSearchView: View {
                      URL(fileURLWithPath: "/System/Applications"),
                      URL(fileURLWithPath: "/System/Applications/Utilities"),
                      manager.homeDirectoryForCurrentUser.appendingPathComponent("Applications")]
-        return roots.flatMap { root in
-            (try? manager.contentsOfDirectory(at: root, includingPropertiesForKeys: [.isDirectoryKey],
-                                              options: .skipsHiddenFiles)) ?? []
-        }.filter { $0.pathExtension.lowercased() == "app" && (try? $0.resourceValues(forKeys: [.isDirectoryKey]).isDirectory) == true }
+        var applications: [URL] = []
+        for root in roots {
+            let keys: [URLResourceKey] = [.isDirectoryKey]
+            guard let entries = try? manager.contentsOfDirectory(at: root, includingPropertiesForKeys: keys,
+                                                                  options: .skipsHiddenFiles) else { continue }
+            for entry in entries where entry.pathExtension.lowercased() == "app" {
+                guard let values = try? entry.resourceValues(forKeys: [.isDirectoryKey]),
+                      values.isDirectory == true else { continue }
+                applications.append(entry)
+            }
+        }
+        return applications
     }
 
     private var searchResults: [Result] {
