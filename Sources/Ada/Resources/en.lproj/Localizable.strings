@@ -156,6 +156,8 @@
 "Dosya seçimini değiştir" = "Toggle file selection";
 "Dosya sürüklerken rafı aç" = "Open shelf while dragging files";
 "Dosyalar" = "Files";
+"Dosyalar kısayolu: {0}" = "Files shortcut: {0}";
+"Dosyalar kısayolunu kaldır" = "Remove Files shortcut";
 "Dosyalar panoya kopyalanamadı." = "Could not copy the files to the clipboard.";
 "Dosyaları aç" = "Open Files";
 "Dosyaları buraya bırak" = "Drop files here";
@@ -343,6 +345,7 @@
 "Oynatıcı" = "Player";
 "Oynatıcıyı aç" = "Open player";
 "Panel genişliği" = "Panel width";
+"Panel kısayolu: {0}" = "Panel shortcut: {0}";
 "Panel teması" = "Panel theme";
 "Paneli aç" = "Open panel";
 "Paneli aç / kapat" = "Open / close panel";

@@ -156,6 +156,8 @@
 "Dosya seçimini değiştir" = "Dosya seçimini değiştir";
 "Dosya sürüklerken rafı aç" = "Dosya sürüklerken rafı aç";
 "Dosyalar" = "Dosyalar";
+"Dosyalar kısayolu: {0}" = "Dosyalar kısayolu: {0}";
+"Dosyalar kısayolunu kaldır" = "Dosyalar kısayolunu kaldır";
 "Dosyalar panoya kopyalanamadı." = "Dosyalar panoya kopyalanamadı.";
 "Dosyaları aç" = "Dosyaları aç";
 "Dosyaları buraya bırak" = "Dosyaları buraya bırak";
@@ -343,6 +345,7 @@
 "Oynatıcı" = "Oynatıcı";
 "Oynatıcıyı aç" = "Oynatıcıyı aç";
 "Panel genişliği" = "Panel genişliği";
+"Panel kısayolu: {0}" = "Panel kısayolu: {0}";
 "Panel teması" = "Panel teması";
 "Paneli aç" = "Paneli aç";
 "Paneli aç / kapat" = "Paneli aç / kapat";

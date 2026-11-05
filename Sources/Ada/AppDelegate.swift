@@ -23,11 +23,12 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     private lazy var dashboard = DashboardLayoutStore(initialTiles: model.preferences.initialDashboardTiles)
     private var observations = Set<AnyCancellable>()
     private var activeShortcuts: [ShortcutBinding?] = []
+    private var shortcutMenuItems: (panel: NSMenuItem, files: NSMenuItem)?
     private let panelController = PanelController()
     private var panel: IslandPanel { panelController.panel }
     private var statusMenu: StatusMenuController!
     private var visible = true
-    private var selectedScreen: NSScreen?
+    private var selectedGeometry: ScreenGeometry?
     private var lastTargetFrame: NSRect? { panelController.lastTargetFrame }
     private let settingsController = SettingsWindowController()
     private let welcomeController = WelcomeWindowController()
@@ -50,8 +51,8 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
 
     func applicationDidFinishLaunching(_ notification: Notification) {
         NSApp.setActivationPolicy(.accessory)
-        StatusMenuController.installEditingMenu(target: self, panelAction: #selector(togglePanelFromKeyboard),
-            settingsAction: #selector(showSettings), quitAction: #selector(quit))
+        shortcutMenuItems = StatusMenuController.installEditingMenu(target: self, panelAction: #selector(togglePanelFromKeyboard),
+            filesAction: #selector(openFilesFromShortcut), settingsAction: #selector(showSettings), quitAction: #selector(quit))
         DistributedNotificationCenter.default().addObserver(self, selector: #selector(externalActivation(_:)),
             name: AppInstanceCoordinator.activationName, object: Bundle.main.bundleIdentifier ?? AdaInstallation.identifier)
         panel.onPrimaryClick = { [weak self] point in self?.openFromNotchClick(at: point, includeCompactPanel: true) ?? false }
@@ -189,11 +190,14 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
             guard let number = screen.deviceDescription[NSDeviceDescriptionKey("NSScreenNumber")] as? NSNumber else { return false }
             return CGDisplayIsBuiltin(number.uint32Value) != 0
         })
-        selectedScreen = model.preferences.displayChoice == .main ? NSScreen.screens.first : builtin
-        selectedScreen = selectedScreen ?? NSScreen.main ?? NSScreen.screens.first
-        guard let screen = selectedScreen else { return }
-        model.availableScreenWidth = screen.frame.width
+        let preferredScreen = model.preferences.displayChoice == .main ? NSScreen.screens.first : builtin
+        guard let screen = preferredScreen ?? NSScreen.main ?? NSScreen.screens.first else {
+            selectedGeometry = nil
+            return
+        }
         let geometry = geometry(on: screen)
+        selectedGeometry = geometry
+        model.availableScreenWidth = screen.frame.width
         model.menuBarHeight = geometry.menuBarHeight
         model.notchWidth = geometry.notchWidth
         position(animated: animated)
@@ -206,15 +210,14 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     }
 
     private func position(animated: Bool = false) {
-        guard let screen = selectedScreen else { return }
-        let frame = geometry(on: screen).panelFrame(size: CGSize(width: model.width, height: model.height),
+        guard let selectedGeometry else { return }
+        let frame = selectedGeometry.panelFrame(size: CGSize(width: model.width, height: model.height),
             attached: model.attached, flushToTop: model.flushToTop, floatingGap: model.preferences.floatingGap)
         panelController.position(frame: frame, attached: model.attached, expanded: model.expanded, animated: animated)
     }
 
     private func cameraInputFrame(horizontalPadding: CGFloat = 0, below: CGFloat = 0) -> NSRect? {
-        guard let screen = selectedScreen else { return nil }
-        return geometry(on: screen).cameraInputFrame(attached: model.attached, horizontalPadding: horizontalPadding, below: below)
+        selectedGeometry?.cameraInputFrame(attached: model.attached, horizontalPadding: horizontalPadding, below: below)
     }
 
     private func pointerNearPanel(_ pointer: NSPoint) -> Bool {
@@ -253,13 +256,17 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
             ? [model.preferences.panelShortcut, model.preferences.filesShortcut] : [nil, nil]
         if activeShortcuts != keys {
             activeShortcuts = keys
+            if let shortcutMenuItems {
+                StatusMenuController.setShortcut(keys[0], on: shortcutMenuItems.panel)
+                StatusMenuController.setShortcut(keys[1], on: shortcutMenuItems.files)
+            }
             shortcut.stop()
             filesShortcut.stop()
             if let panelKey = keys[0] {
                 shortcut.start(binding: panelKey) { [weak self] in self?.togglePanelFromKeyboard() }
             }
             if let filesKey = keys[1] {
-                filesShortcut.start(binding: filesKey) { [weak self] in self?.openFromShortcut(to: .files) }
+                filesShortcut.start(binding: filesKey) { [weak self] in self?.openFilesFromShortcut() }
             }
             model.shortcutStatus = [shortcut.errorMessage, filesShortcut.errorMessage].compactMap { $0 }.joined(separator: " ")
         }
@@ -279,6 +286,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         else { openFromShortcut() }
     }
 
+    @objc private func openFilesFromShortcut() { openFromShortcut(to: .files) }
     @objc private func openAssistant() { openFromShortcut(to: .assistant) }
     @objc private func openSystem() { openFromShortcut(to: .system) }
     @objc private func openCloud() { openFromShortcut(to: .cloud) }

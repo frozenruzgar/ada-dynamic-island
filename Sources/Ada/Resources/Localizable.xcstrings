@@ -8928,6 +8928,54 @@
           }
         }
       }
+    },
+    "Panel kısayolu: {0}": {
+      "localizations": {
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Panel kısayolu: {0}"
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Panel shortcut: {0}"
+          }
+        }
+      }
+    },
+    "Dosyalar kısayolu: {0}": {
+      "localizations": {
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Dosyalar kısayolu: {0}"
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Files shortcut: {0}"
+          }
+        }
+      }
+    },
+    "Dosyalar kısayolunu kaldır": {
+      "localizations": {
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Dosyalar kısayolunu kaldır"
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Remove Files shortcut"
+          }
+        }
+      }
     }
   },
   "version": "1.0"

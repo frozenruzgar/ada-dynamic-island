@@ -12,7 +12,7 @@ public enum PointerTrackingPolicy {
         switch mode {
         case .disabled: return nil
         case .eventsOnly: return globalMonitorAvailable ? nil : 0.2
-        case .active: return 0.06
+        case .active: return 0.12
         }
     }
 }

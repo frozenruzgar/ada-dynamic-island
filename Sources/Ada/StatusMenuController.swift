@@ -18,7 +18,8 @@ final class StatusMenuController: NSObject, NSMenuDelegate {
         let item = NSMenuItem(title: title, action: action, keyEquivalent: key)
         item.target = target; item.state = checked ? .on : .off; menu.addItem(item)
     }
-    static func installEditingMenu(target: AnyObject, panelAction: Selector, settingsAction: Selector, quitAction: Selector) {
+    static func installEditingMenu(target: AnyObject, panelAction: Selector, filesAction: Selector,
+                                   settingsAction: Selector, quitAction: Selector) -> (panel: NSMenuItem, files: NSMenuItem) {
         // Accessory apps still need a standard Edit menu for text responder shortcuts.
         let bar = NSMenu()
         let appItem = NSMenuItem()
@@ -26,6 +27,9 @@ final class StatusMenuController: NSObject, NSMenuDelegate {
         let panelItem = NSMenuItem(title: L10n.string("Paneli aç / kapat"), action: panelAction, keyEquivalent: "")
         panelItem.target = target
         appMenu.addItem(panelItem)
+        let filesItem = NSMenuItem(title: L10n.string("Dosyaları aç"), action: filesAction, keyEquivalent: "")
+        filesItem.target = target
+        appMenu.addItem(filesItem)
         let settingsItem = NSMenuItem(title: L10n.string("Ayarlar…"), action: settingsAction, keyEquivalent: ",")
         settingsItem.target = target
         appMenu.addItem(settingsItem)
@@ -50,6 +54,19 @@ final class StatusMenuController: NSObject, NSMenuDelegate {
         editItem.submenu = edit
         bar.addItem(editItem)
         NSApp.mainMenu = bar
+        return (panelItem, filesItem)
+    }
+
+    static func setShortcut(_ shortcut: ShortcutBinding?, on item: NSMenuItem) {
+        item.keyEquivalent = shortcut?.key.lowercased() ?? ""
+        let modifiers = shortcut?.modifiers ?? 0
+        let mapping: [(UInt32, NSEvent.ModifierFlags)] = [
+            (ShortcutBinding.command, .command), (ShortcutBinding.shift, .shift),
+            (ShortcutBinding.option, .option), (ShortcutBinding.control, .control)
+        ]
+        item.keyEquivalentModifierMask = mapping.reduce(into: []) { flags, entry in
+            if modifiers & entry.0 != 0 { flags.insert(entry.1) }
+        }
     }
 
 }

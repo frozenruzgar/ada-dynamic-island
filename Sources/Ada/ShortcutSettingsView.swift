@@ -14,25 +14,6 @@ struct ShortcutSettingsView: View {
 
     var body: some View {
         Toggle(L10n.string("Genel klavye kısayolu"), isOn: $model.preferences.globalShortcutEnabled)
-        LabeledContent(L10n.string("Adayı aç / kapat")) {
-            Button(model.preferences.panelShortcut.title) { record(.panel) }
-            Button(L10n.string("Sıfırla")) {
-                if ShortcutBinding.standard.conflicts(with: model.preferences.filesShortcut) {
-                    model.preferences.filesShortcut = nil
-                }
-                model.preferences.panelShortcut = .standard
-            }
-        }
-        LabeledContent(L10n.string("Dosyaları aç")) {
-            Button(model.preferences.filesShortcut?.title ?? L10n.string("Kaydet…")) { record(.files) }
-            if model.preferences.filesShortcut != nil {
-                Button(L10n.string("Kaldır")) { model.preferences.filesShortcut = nil }
-            }
-        }
-        if !model.shortcutStatus.isEmpty {
-            Text(model.shortcutStatus).adaFont(size: Typography.caption).foregroundStyle(.orange)
-        }
-        Color.clear.frame(height: 0)
             .sheet(item: $destination, onDismiss: { model.recordingShortcut = false }) { target in
                 VStack(alignment: .leading, spacing: 16) {
                     Text(L10n.string("Yeni kısayola bas")).font(.headline)
@@ -46,7 +27,31 @@ struct ShortcutSettingsView: View {
                     ShortcutKeyCapture { binding in save(binding, for: target) }
                 }
             }
-            .accessibilityHidden(destination == nil)
+        HStack {
+            Text(L10n.string("Adayı aç / kapat"))
+            Spacer()
+            Button(model.preferences.panelShortcut.title) { record(.panel) }
+                .accessibilityLabel(L10n.string("Panel kısayolu: \(model.preferences.panelShortcut.title)"))
+            Button(L10n.string("Sıfırla")) {
+                if ShortcutBinding.standard.conflicts(with: model.preferences.filesShortcut) {
+                    model.preferences.filesShortcut = nil
+                }
+                model.preferences.panelShortcut = .standard
+            }
+        }
+        HStack {
+            Text(L10n.string("Dosyaları aç"))
+            Spacer()
+            Button(model.preferences.filesShortcut?.title ?? L10n.string("Kaydet…")) { record(.files) }
+                .accessibilityLabel(L10n.string("Dosyalar kısayolu: \(model.preferences.filesShortcut?.title ?? L10n.string("Kaydet…"))"))
+            if model.preferences.filesShortcut != nil {
+                Button(L10n.string("Kaldır")) { model.preferences.filesShortcut = nil }
+                    .accessibilityLabel(L10n.string("Dosyalar kısayolunu kaldır"))
+            }
+        }
+        if !model.shortcutStatus.isEmpty {
+            Text(model.shortcutStatus).adaFont(size: Typography.caption).foregroundStyle(.orange)
+        }
     }
 
     private func record(_ target: Destination) {
