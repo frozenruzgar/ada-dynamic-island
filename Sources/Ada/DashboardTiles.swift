@@ -304,7 +304,6 @@ struct DashboardTilePicker: View {
             ScrollView {
                 VStack(alignment: .leading, spacing: 14) {
                     choices(applications)
-                    Text("Ada").adaFont(size: 12, weight: .semibold).foregroundStyle(.secondary)
                     choices(widgets)
                 }.padding(3)
             }.scrollIndicators(.hidden)

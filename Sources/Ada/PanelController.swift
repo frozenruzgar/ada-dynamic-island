@@ -23,9 +23,13 @@ final class IslandPanel: NSPanel {
     }
 
     override func sendEvent(_ event: NSEvent) {
-        if event.type == .leftMouseDown, !event.modifierFlags.contains(.control),
-           onPrimaryClick?(convertPoint(toScreen: event.locationInWindow)) == true {
-            return
+        if event.type == .leftMouseDown {
+            if !event.modifierFlags.contains(.control),
+               onPrimaryClick?(convertPoint(toScreen: event.locationInWindow)) == true {
+                return
+            }
+            // Key the nonactivating panel before AppKit dispatches to a SwiftUI control.
+            if !isKeyWindow { makeKey() }
         }
         super.sendEvent(event)
     }
@@ -41,7 +45,6 @@ final class IslandPanel: NSPanel {
 final class PanelController {
     let panel: IslandPanel
     private(set) var lastTargetFrame: NSRect?
-    private(set) var animatingUntil = Date.distantPast
     init() {
         panel = IslandPanel(contentRect: .zero,
                             styleMask: [.borderless, .nonactivatingPanel],
@@ -64,14 +67,19 @@ final class PanelController {
         panel.usesFullScreenFrame = attached
         guard frame != lastTargetFrame else { return }
         lastTargetFrame = frame
-        if animated && !NSWorkspace.shared.accessibilityDisplayShouldReduceMotion {
-            let duration = expanded ? 0.42 : 0.38
-            animatingUntil = Date().addingTimeInterval(duration)
+        // Open controls at their final coordinates. SwiftUI animates their appearance.
+        if animated && !expanded && !NSWorkspace.shared.accessibilityDisplayShouldReduceMotion {
             NSAnimationContext.runAnimationGroup { context in
-                context.duration = duration
+                context.duration = 0.38
                 context.timingFunction = CAMediaTimingFunction(controlPoints: 0.22, 0.72, 0.28, 1)
                 panel.animator().setFrame(frame, display: true)
             }
-        } else { animatingUntil = .distantPast; panel.setFrame(frame, display: true) }
+        } else {
+            // This also replaces a closing frame animation if Ada reopens mid-transition.
+            NSAnimationContext.runAnimationGroup { context in
+                context.duration = 0
+                panel.animator().setFrame(frame, display: true)
+            }
+        }
     }
 }

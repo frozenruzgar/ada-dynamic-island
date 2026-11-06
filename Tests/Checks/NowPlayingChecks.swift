@@ -57,6 +57,26 @@ enum NowPlayingChecks {
         expect(!store.isControlling && store.track == nil, "Disabled controls do not launch or send commands to players")
         store.stop()
         expect(!store.isEnabled && store.track == nil, "Disabled lifecycle is idempotent")
+        let domain = "AdaCompactMusic-" + UUID().uuidString
+        let defaults = UserDefaults(suiteName: domain)!
+        defer { defaults.removePersistentDomain(forName: domain) }
+        let model = IslandModel(defaults: defaults, startServices: false)
+        model.notchWidth = 192
+        model.menuBarHeight = 38
+        model.mediaIsPlaying = true
+        expect(model.flushToTop && model.closedWidth == 280, "Existing compact playback stays beside the camera by default")
+        model.preferences.keepCompactMusicBelowMenu = true
+        expect(model.compactMusicBelowMenu && !model.flushToTop && model.closedWidth == 230, "The optional smaller player clears the menu bar")
+        expect(IslandPreferences.load(defaults: defaults).keepCompactMusicBelowMenu, "Compact player placement is saved")
+        model.expanded = true
+        expect(!model.compactMusicBelowMenu && model.flushToTop, "The expanded panel still joins the top edge")
+        model.expanded = false
+        model.notchWidth = 0
+        expect(!model.compactMusicBelowMenu && model.closedWidth == 230, "Notchless screens retain the existing player")
+        model.notchWidth = 192
+        model.mediaIsPlaying = false
+        expect(!model.compactMusicBelowMenu && !model.flushToTop, "Placement applies only during playback")
         print("PASS: now-playing source arbitration, pause retention, stopped/blank handling, artwork identity and HTTPS allowlist, stale reply rejection, timing normalization and playback progression, disabled lifecycle; no player launch or playback")
+        print("PASS: compact music placement, persistence, top-attached expansion and notchless fallback")
     }
 }

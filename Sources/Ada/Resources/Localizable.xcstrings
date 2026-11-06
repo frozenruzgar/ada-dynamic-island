@@ -2689,18 +2689,18 @@
         }
       }
     },
-    "Kapalıyken tıklayarak veya dosya sürükleyerek açılır. Panelin dışına tıklayınca küçülür.": {
+    "Kapalıyken çentiğe tıklayarak açabilirsin. Kapatmak için çentiğe tekrar ya da panelin dışına tıkla.": {
       "localizations": {
         "tr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Kapalıyken tıklayarak veya dosya sürükleyerek açılır. Panelin dışına tıklayınca küçülür."
+            "value": "Kapalıyken çentiğe tıklayarak açabilirsin. Kapatmak için çentiğe tekrar ya da panelin dışına tıkla."
           }
         },
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "When disabled, click or drag a file to open. Click outside the panel to collapse it."
+            "value": "When disabled, click the notch to open. Click it again or click outside the panel to close."
           }
         }
       }
@@ -3085,6 +3085,22 @@
           "stringUnit": {
             "state": "translated",
             "value": "Battery percentage in compact view"
+          }
+        }
+      }
+    },
+    "Küçük müzik göstergesini menü çubuğunun altında tut": {
+      "localizations": {
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Küçük müzik göstergesini menü çubuğunun altında tut"
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Keep the compact music player below the menu bar"
           }
         }
       }
@@ -4861,22 +4877,6 @@
           "stringUnit": {
             "state": "translated",
             "value": "Spotify"
-          }
-        }
-      }
-    },
-    "Spotify veya Apple Müzik kutucuğu eklediğinde etkinleşir.": {
-      "localizations": {
-        "tr": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Spotify veya Apple Müzik kutucuğu eklediğinde etkinleşir."
-          }
-        },
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "The indicator works even without a music tile."
           }
         }
       }

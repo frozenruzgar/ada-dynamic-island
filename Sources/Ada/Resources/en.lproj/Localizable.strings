@@ -236,7 +236,7 @@
 "Kamera önizlemesi başlatılamadı. {0}" = "Could not start the camera preview. {0}";
 "Kamerayı kullanan diğer uygulamaları kontrol et." = "Check other applications using the camera.";
 "Kapalı" = "Off";
-"Kapalıyken tıklayarak veya dosya sürükleyerek açılır. Panelin dışına tıklayınca küçülür." = "When disabled, click or drag a file to open. Click outside the panel to collapse it.";
+"Kapalıyken çentiğe tıklayarak açabilirsin. Kapatmak için çentiğe tekrar ya da panelin dışına tıkla." = "When disabled, click the notch to open. Click it again or click outside the panel to close.";
 "Kapat" = "Close";
 "Kart görünürlüğü" = "Card visibility";
 "Kart köşe yuvarlaklığı" = "Card corner radius";
@@ -271,6 +271,7 @@
 "Kutucuklar" = "Tiles";
 "Kutucuğu kaldır" = "Remove tile";
 "Küçük görünümde pil yüzdesi" = "Battery percentage in compact view";
+"Küçük müzik göstergesini menü çubuğunun altında tut" = "Keep the compact music player below the menu bar";
 "Kısayol dinleyicisi başlatılamadı ({0})." = "Could not start the shortcut listener ({0}).";
 "Kısayol ekle" = "Add shortcut";
 "Kısayollar" = "Shortcuts";
@@ -409,7 +410,6 @@
 "Soru sor" = "Ask a question";
 "Soru veya metin…" = "Question or text…";
 "Spotify" = "Spotify";
-"Spotify veya Apple Müzik kutucuğu eklediğinde etkinleşir." = "The indicator works even without a music tile.";
 "Spotify veya Apple Müzik’te bir parça başlat." = "Start a track in Spotify or Apple Music.";
 "Standart güç" = "Standard power";
 "Süre" = "Duration";

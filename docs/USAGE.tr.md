@@ -4,6 +4,8 @@
 
 Fareyi çentiğe yaklaştırınca Ada açılır. Panelin kenarından biraz uzaklaşınca yumuşakça küçülür. Tıklayarak, dosya sürükleyerek veya ⌃⌥A ile de açabilirsin.
 
+Fareyle açılma kapalıysa çentiğe tekrar tıklayarak Ada’yı kapatabilirsin.
+
 **Hızlı ara** simgesinden Ada bölümlerini ve eklediğin kutucukları bulabilirsin. Ok tuşları sonuçlar arasında gezinir, Return seçili sonucu açar, Esc önceki ekrana döner.
 
 Şarkı çalarken çentiğe gelmek veya bir kez tıklamak, 512 pt genişliğinde koyu oynatıcıyı açar. Solda kapak ve Spotify’ın yeşil daire logosu, ortada parça adı ve oynatma denetimleri, sağda haftalık takvim bulunur. Yer varsa başlık düğmeleri doğrudan çentiğin iki yanında durur; kapak ve yazılar çentiğin hemen altında başlar. Ev simgesi daima **Ana ekran**ı açar ve seçimini kaydeder. **Oynatıcı** simgesinden de bu panele geçebilirsin. Parça süre bilgisi sağlıyorsa çubuktan konumu değiştirebilirsin.
@@ -40,6 +42,8 @@ Spotify, Apple Müzik, ChatGPT, Claude ve Ada araçları hazırdır. **Uygulama 
 ### Spotify ve Apple Müzik
 
 Medya kutucukları çalışan Mac uygulamasından parça adı, sanatçı ve sağlandığında albüm kapağını okur. Önceki, oynat/duraklat ve sonraki düğmeleri ilgili uygulamayı denetler. Parça çalarken küçük ada çentiğin iki yanında albüm kapağı ve hareketli bir gösterge açar. Açık panelin başlığında da parça görünür. Duraklatıldığında kutucuktaki kapak korunur, küçük gösterge kapanır. İki uygulama aynı anda çalarsa yeni başlayan kaynak öne geçer.
+
+**Ayarlar → Ana ekran → Müzik** altında küçük müzik göstergesini menü çubuğunun hemen altında tutabilirsin. Çentiğe gelince büyük oynatıcı yine üst kenara birleşerek açılır.
 
 İlk erişimde macOS Otomasyon izni isteyebilir. İzin kapalıysa kutucuktaki **İzinler** düğmesinden açabilirsin. Bilgiler iki saniyede bir arka planda okunur. Bu okuma uygulamaları veya şarkıları kendiliğinden başlatmaz. Müzik kutucuğu ekli olmasa da gösterge çalışır. Ayarlar → Ana ekran → **Çalan parçayı adada göster** kapatılınca okuma durur.
 

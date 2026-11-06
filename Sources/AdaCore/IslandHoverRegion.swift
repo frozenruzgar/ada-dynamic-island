@@ -4,14 +4,17 @@ import CoreGraphics
 public struct IslandHoverRegion {
     private let panel: CGRect?
     private let camera: CGRect?
+    private let panelTopLimit: CGFloat?
 
-    public init(panel: CGRect?, camera: CGRect? = nil) {
+    public init(panel: CGRect?, camera: CGRect? = nil, panelTopLimit: CGFloat? = nil) {
         self.panel = panel?.insetBy(dx: -4, dy: -4)
         self.camera = camera
+        self.panelTopLimit = panelTopLimit
     }
 
     public func contains(_ pointer: CGPoint) -> Bool {
         if let camera, contains(pointer, in: camera) { return true }
+        if let panelTopLimit, pointer.y > panelTopLimit { return false }
         return panel.map { contains(pointer, in: $0) } ?? false
     }
 

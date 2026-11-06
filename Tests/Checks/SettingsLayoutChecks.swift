@@ -20,6 +20,16 @@ enum SettingsLayoutChecks {
         precondition(window.contentView?.fittingSize == size)
         precondition(!window.isVisible, "Layout checks must not show or activate a window")
         window.close()
-        print("PASS: native settings content frame, hosting intrinsic size and shared layout dimensions; no window shown")
+
+        let island = PanelController()
+        let compact = NSRect(x: 340, y: 760, width: 116, height: 31)
+        let expanded = NSRect(x: 68, y: 580, width: 660, height: 244)
+        island.position(frame: compact, attached: true, expanded: false, animated: false)
+        island.position(frame: expanded, attached: true, expanded: true, animated: true)
+        precondition(island.panel.frame == expanded, "Buttons have their final coordinates on the opening event")
+        island.position(frame: compact, attached: true, expanded: false, animated: true)
+        island.position(frame: expanded, attached: true, expanded: true, animated: true)
+        precondition(island.panel.frame == expanded, "Reopening takes precedence over the closing resize")
+        print("PASS: native settings dimensions and immediate island interaction bounds; no window shown")
     }
 }

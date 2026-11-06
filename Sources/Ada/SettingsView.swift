@@ -110,8 +110,11 @@ struct SettingsView: View {
         }
         Section(L10n.string("Müzik")) {
             Toggle(L10n.string("Çalan parçayı adada göster"), isOn: $model.preferences.showNowPlaying)
-            Text(L10n.string("Spotify veya Apple Müzik kutucuğu eklediğinde etkinleşir."))
-                .adaFont(size: Typography.caption).foregroundStyle(.secondary)
+            if model.preferences.style == .notch {
+                Toggle(L10n.string("Küçük müzik göstergesini menü çubuğunun altında tut"),
+                       isOn: $model.preferences.keepCompactMusicBelowMenu)
+                    .disabled(!model.preferences.showNowPlaying)
+            }
         }
         Section(L10n.string("Dosya rafı")) {
             Toggle(L10n.string("Dosya sürüklerken rafı aç"), isOn: $model.preferences.openShelfOnDrag)
@@ -151,7 +154,7 @@ struct SettingsView: View {
         }
         Section(L10n.string("Açılma ve kapanma")) {
             Toggle(L10n.string("Üzerine gelince aç ve uzaklaşınca kapat"), isOn: $model.preferences.hoverToOpen)
-            Text(L10n.string("Kapalıyken tıklayarak veya dosya sürükleyerek açılır. Panelin dışına tıklayınca küçülür."))
+            Text(L10n.string("Kapalıyken çentiğe tıklayarak açabilirsin. Kapatmak için çentiğe tekrar ya da panelin dışına tıkla."))
                 .adaFont(size: Typography.caption).foregroundStyle(.secondary)
             Toggle(L10n.string("Paneli açık tut"), isOn: $model.pinned)
             VStack(alignment: .leading, spacing: 5) {
