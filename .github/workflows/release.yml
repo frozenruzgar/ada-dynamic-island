@@ -60,15 +60,20 @@ jobs:
         shell: bash
         run: |
           notes="$RUNNER_TEMP/release-notes.md"
-          printf 'Ada %s · Apple Silicon, macOS 14+\n\n' "$RELEASE_TAG" > "$notes"
+          package="Ada-${RELEASE_TAG#v}-AppleSilicon.dmg"
+          download="https://github.com/$GITHUB_REPOSITORY/releases/download/$RELEASE_TAG/$package"
+          printf '## [↓ Ada’yı indir / Download Ada (.dmg)](%s)\n\n' "$download" > "$notes"
+          printf 'Apple Silicon (M serisi / M-series) · macOS 14+\n\n' >> "$notes"
+          printf 'DMG’yi aç, **Ada**’yı **Uygulamalar** klasörüne sürükle ve oradan aç.\n\n' >> "$notes"
+          printf 'Open the DMG, drag **Ada** into **Applications**, and open it from there.\n\n' >> "$notes"
           flags=(--prerelease)
           if [[ -n "${NOTARY_PROFILE:-}" ]]; then
             printf 'Developer ID signed and notarized.\n' >> "$notes"
             flags=(--latest)
           else
-            printf 'Preview build. Not notarized. See docs/RELEASE.md.\n' >> "$notes"
+            printf 'Noter onaysız önizleme / Unnotarized preview. [Apple Support](https://support.apple.com/102445)\n' >> "$notes"
           fi
-          gh release create "$RELEASE_TAG" dist/*.zip dist/*.dmg dist/*.sha256 dist/Casks/ada-island.rb --verify-tag --title "Ada $RELEASE_TAG" --notes-file "$notes" "${flags[@]}"
+          gh release create "$RELEASE_TAG" "dist/$package" --verify-tag --title "Ada $RELEASE_TAG" --notes-file "$notes" "${flags[@]}"
       - name: Remove temporary keychain
         if: always()
         shell: bash

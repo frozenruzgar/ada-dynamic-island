@@ -2,15 +2,15 @@
 
 [English](README.en.md) · [Kullanım kılavuzu](docs/USAGE.tr.md) · [Değişiklikler](CHANGELOG.md)
 
-MacBook çentiğinden açılan yerel çalışma alanı. Ana ekranını düzenle; Spotify ve Apple Müzik’i denetle, dosyaları rafta tut, odaklan veya teleprompter kullan. Mor/pembe Nebula ve cam temaları, fareyle açılma ve klavye erişimi bulunur. Arayüz sistem diline göre Türkçe veya İngilizce açılır.
+[**↓ Ada’yı Mac için indir (.dmg)**](https://github.com/frozenruzgar/ada-dynamic-island/releases/download/v0.12.1/Ada-0.12.1-AppleSilicon.dmg)
 
-## İndir
+Apple Silicon (M serisi) ve macOS 14+. İndirilen DMG’yi aç, **Ada**’yı **Uygulamalar** klasörüne sürükle ve oradan aç.
 
-[**GitHub’daki yayınlanan paketler**](https://github.com/frozenruzgar/ada-dynamic-island/releases)
-
-Kaynak sürümü `Resources/Info.plist` içinde tutulur; yayımlanmış paket farklı bir sürüm olabilir. ZIP’i açıp Ada.app’i Uygulamalar’a taşı. Yerel paketler Apple Silicon içindir, macOS 14+ gerektirir. Liquid Glass görünümü macOS 26’da desteklenir. Paketlerin imza/noter durumu sürüm notunda belirtilir. Yerel ad-hoc paket Apple noter onaylı değildir. [Apple’ın uygulama açma kılavuzu](https://support.apple.com/tr-tr/102445).
+0.12.1 noter onaysız bir önizlemedir. macOS ilk açılışta onay isteyebilir. [Apple’ın açma kılavuzu](https://support.apple.com/tr-tr/102445) · [Tüm sürümler](https://github.com/frozenruzgar/ada-dynamic-island/releases)
 
 ## Özellikler
+
+MacBook çentiğinden açılan yerel çalışma alanı. Mor/pembe Nebula ve cam temaları, fareyle açılma ve klavye erişimi bulunur. Arayüz sistem diline göre Türkçe veya İngilizce açılır.
 
 | Bölüm | Yapabileceklerin |
 | --- | --- |
