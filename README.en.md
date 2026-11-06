@@ -2,11 +2,15 @@
 
 [Türkçe](README.md) · [Release notes](CHANGELOG.md)
 
-A native SwiftUI/AppKit workspace attached to the MacBook notch. Customize dashboard tiles, control Spotify and Apple Music, keep local file copies, run a focus timer, or read a teleprompter. Includes purple/pink Nebula and glass themes.
+[**↓ Download Ada for Mac (.dmg)**](https://github.com/frozenruzgar/ada-dynamic-island/releases/download/v0.12.1/Ada-0.12.1-AppleSilicon.dmg)
 
-## Download
+Apple Silicon (M-series) and macOS 14 or later. Open the DMG, drag **Ada** into **Applications**, and open it from there.
 
-[Published GitHub releases](https://github.com/frozenruzgar/ada-dynamic-island/releases). The source version lives in `Resources/Info.plist`; a published binary may be older. Local binaries target Apple Silicon and macOS 14+. Liquid Glass requires macOS 26. Local ad-hoc builds are not notarized. See [Apple’s guide](https://support.apple.com/102445) for opening downloaded apps.
+0.12.1 is an unnotarized preview. macOS may require approval on first launch. [Apple’s guide](https://support.apple.com/102445) · [All releases](https://github.com/frozenruzgar/ada-dynamic-island/releases)
+
+## Features
+
+A native workspace attached to the MacBook notch, with purple/pink Nebula and glass themes.
 
 | Area | Features |
 | --- | --- |

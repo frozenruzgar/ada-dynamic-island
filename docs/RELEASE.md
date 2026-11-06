@@ -18,8 +18,8 @@ Gerçek Developer ID imzası ve noter onayı bu Mac’te doğrulanmadı. Gatekee
 
 CI, `macos-15` üzerinde Xcode 16.4 ve 26.3 için ayrı işler içerir. Seçimler [GitHub’ın resmi runner manifestinden](https://github.com/actions/runner-images/blob/main/images/macos/macos-15-arm64-Readme.md) kontrol edildi. Action sürümleri tam commit kimliğine sabittir.
 
-Etiket sürümü Info.plist ile eşleşmek zorundadır. `v*` etiketi ZIP/DMG/kontrol toplamlarını GitHub Release’e yükler. İmza sırları yoksa paket açıkça noter onaysız önizleme olarak yayımlanır. Gerçek imza için `SIGN_IDENTITY`, `CERTIFICATE_P12` (base64), `CERTIFICATE_PASSWORD`, `KEYCHAIN_PASSWORD` gerekir. Noter onayı ayrıca `APPLE_ID`, `APPLE_TEAM_ID`, `APPLE_APP_PASSWORD` gerektirir. Sırlar yalnız etiket işinde kullanılır; PR işleri sırlara erişmez. Geçici sertifika ve anahtar zinciri silinir.
+Etiket sürümü Info.plist ile eşleşmek zorundadır. `v*` etiketi GitHub Release’e tek kullanıcı paketi olarak DMG’yi yükler. ZIP, kontrol toplamı ve Cask derleme çıktısında bulunur. İmza sırları yoksa paket açıkça noter onaysız önizleme olarak yayımlanır. Gerçek imza için `SIGN_IDENTITY`, `CERTIFICATE_P12` (base64), `CERTIFICATE_PASSWORD`, `KEYCHAIN_PASSWORD` gerekir. Noter onayı ayrıca `APPLE_ID`, `APPLE_TEAM_ID`, `APPLE_APP_PASSWORD` gerektirir. Sırlar yalnız etiket işinde kullanılır; PR işleri sırlara erişmez. Geçici sertifika ve anahtar zinciri silinir.
 
 Workflow dosyaları yerel olarak sözdizimi kontrolünden geçirildi. Henüz GitHub üzerinde çalıştırılmadı; uzaktaki yeşil CI durumu iddia edilmez.
 
-Yayın paketi oluşturulunca `dist/Casks/ada-island.rb` aynı ZIP’in SHA-256 özetiyle üretilir. Cask, yayın ZIP’i erişilebilir olduğunda bir Homebrew tap deposuna eklenebilir.
+Yayın paketi oluşturulunca `dist/Casks/ada-island.rb` DMG’nin SHA-256 özetiyle üretilir. Cask bir Homebrew tap deposuna eklenirken GitHub’daki DMG’nin özeti kullanılmalıdır.
