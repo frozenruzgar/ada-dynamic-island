@@ -100,7 +100,10 @@ final class IslandModel: ObservableObject {
         let preferredWidth = page == .player ? 512 : preferences.expandedWidth
         return min(availableScreenWidth - 40, max(preferredWidth, closedWidth))
     }
-    var flushToTop: Bool { attached && (expanded || (mediaIsPlaying && !activityVisible)) }
+    var compactMusicBelowMenu: Bool {
+        !expanded && attached && mediaIsPlaying && !activityVisible && preferences.keepCompactMusicBelowMenu
+    }
+    var flushToTop: Bool { attached && (expanded || (mediaIsPlaying && !activityVisible && !compactMusicBelowMenu)) }
     var menuClearance: CGFloat { flushToTop ? menuBarHeight : 0 }
     var playerHeaderBesideCamera: Bool {
         attached && page == .player && menuClearance >= 26 && (width - notchWidth) / 2 >= 130

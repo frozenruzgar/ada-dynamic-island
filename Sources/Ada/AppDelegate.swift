@@ -36,7 +36,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     private var settingsWindow: NSWindow? { settingsController.window }
     private var tilePickerWindow: NSWindow?
     private let hover = HoverController()
-    private var animatingUntil: Date { panelController.animatingUntil }
+    private var recentHoverOpening: (region: IslandHoverRegion, expires: Date)?
     private var layoutTask: DispatchWorkItem?
     private var outsideClickMonitor: Any?
     private var trackingMenus = Set<ObjectIdentifier>()
@@ -212,7 +212,8 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     private func position(animated: Bool = false) {
         guard let selectedGeometry else { return }
         let frame = selectedGeometry.panelFrame(size: CGSize(width: model.width, height: model.height),
-            attached: model.attached, flushToTop: model.flushToTop, floatingGap: model.preferences.floatingGap)
+            attached: model.attached, flushToTop: model.flushToTop, floatingGap: model.preferences.floatingGap,
+            attachedGap: model.compactMusicBelowMenu ? 0 : 2)
         panelController.position(frame: frame, attached: model.attached, expanded: model.expanded, animated: animated)
     }
 
@@ -220,15 +221,15 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         selectedGeometry?.cameraInputFrame(attached: model.attached, horizontalPadding: horizontalPadding, below: below)
     }
 
-    private func pointerNearPanel(_ pointer: NSPoint) -> Bool {
+    private func currentHoverRegion() -> IslandHoverRegion {
         let visibleFrame = model.expanded || model.compactVisible ? (lastTargetFrame ?? panel.frame) : nil
-        let target = IslandHoverRegion(panel: visibleFrame, camera: cameraInputFrame(horizontalPadding: 3, below: 8))
-        if target.contains(pointer) { return true }
-        // A narrowing page may still be under the pointer until its resize ends.
-        // When collapsed, only the compact target can reopen the island.
-        return model.expanded && Date() < animatingUntil &&
-            IslandHoverRegion(panel: panel.frame).contains(pointer)
+        let keepsMenuClear = model.compactMusicBelowMenu
+        return IslandHoverRegion(panel: visibleFrame,
+            camera: cameraInputFrame(horizontalPadding: keepsMenuClear ? 0 : 3, below: 8),
+            panelTopLimit: keepsMenuClear ? selectedGeometry?.menuBottom : nil)
     }
+
+    private func pointerNearPanel(_ pointer: NSPoint) -> Bool { currentHoverRegion().contains(pointer) }
 
     private func preferencesChanged() {
         // Coalesce slider changes so editing the panel size stays responsive.
@@ -303,16 +304,27 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
             inside: inside, expanded: model.expanded,
             hoverEnabled: model.preferences.hoverToOpen &&
                 (model.preferences.openShelfOnDrag || NSEvent.pressedMouseButtons == 0),
-            expand: { [weak self] in self?.expandFromNotch() },
+            expand: { [weak self] in self?.expandFromHover() },
             scheduleCollapse: { [weak self] in self?.scheduleCollapse() })
     }
 
     private func openFromNotchClick(at point: NSPoint, includeCompactPanel: Bool) -> Bool {
         guard visible, settingsWindow?.isVisible != true, tilePickerWindow?.isVisible != true,
-              !welcomeController.isVisible, trackingMenus.isEmpty, !dragInProgress,
-              !model.expanded || (model.mediaIsPlaying && model.page != .player) else { return false }
+              !welcomeController.isVisible, trackingMenus.isEmpty, !dragInProgress else { return false }
 
+        // A mouse move can open Ada immediately before that same pointer presses the notch.
+        if let recentHoverOpening, Date() <= recentHoverOpening.expires,
+           recentHoverOpening.region.contains(point) {
+            self.recentHoverOpening = nil
+            holdOpenAfterClick()
+        }
         let clickedCamera = cameraInputFrame()?.contains(point) == true
+        if clickedCamera && model.expanded && !model.preferences.hoverToOpen {
+            guard !model.pinned, !hasActivePanelInteraction else { return false }
+            collapse()
+            return true
+        }
+        guard !model.expanded || (model.mediaIsPlaying && model.page != .player) else { return false }
         let clickedCompact = includeCompactPanel && !model.expanded && model.compactVisible &&
             (lastTargetFrame ?? panel.frame).contains(point)
         guard clickedCamera || clickedCompact else { return false }
@@ -321,9 +333,18 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     }
 
     private func openCompactIsland() {
-        hover.holdOpenUntil = Date().addingTimeInterval(1)
+        holdOpenAfterClick()
         expandFromNotch()
         panel.makeKey()
+    }
+
+    private func holdOpenAfterClick() {
+        hover.holdOpenUntil = max(hover.holdOpenUntil, Date().addingTimeInterval(1.6))
+    }
+
+    private func expandFromHover() {
+        recentHoverOpening = (currentHoverRegion(), Date().addingTimeInterval(0.35))
+        expandFromNotch()
     }
 
     private func expandFromNotch() {
@@ -369,6 +390,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         cancelCollapse()
         hover.holdOpenUntil = .distantPast
         hover.keyboardHeld = false
+        recentHoverOpening = nil
         panel.resignKey()
         model.expanded = false
         configureFeatures()
@@ -384,14 +406,16 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         model.page == .prompter && prompter.isPlaying
     }
 
-    private var keepsPanelOpen: Bool {
-        isReadingScript || hover.keyboardHeld || model.panelPopoverOpen || (model.page == .home && dashboard.isEditing) || (model.page == .files && shelf.isSharing)
+    private var hasActivePanelInteraction: Bool {
+        isReadingScript || model.panelPopoverOpen || (model.page == .home && dashboard.isEditing) || (model.page == .files && shelf.isSharing)
     }
+
+    private var keepsPanelOpen: Bool { hover.keyboardHeld || hasActivePanelInteraction }
 
     private var mayAutoCollapse: Bool {
         model.expanded && model.preferences.hoverToOpen && !model.pinned && !keepsPanelOpen &&
         NSEvent.pressedMouseButtons == 0 && trackingMenus.isEmpty &&
-        Date() >= hover.holdOpenUntil && Date() >= animatingUntil
+        Date() >= hover.holdOpenUntil
     }
 
     @objc private func menuStartedTracking(_ notification: Notification) {

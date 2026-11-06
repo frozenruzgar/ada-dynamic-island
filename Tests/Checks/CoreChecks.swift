@@ -4,7 +4,7 @@ import CoreGraphics
 import AdaCore
 
 enum CoreChecks {
-    static func main() throws {
+    @MainActor static func main() throws {
 func expect(_ condition: @autoclosure () -> Bool, _ message: String) {
     guard condition() else {
         fputs("FAIL: \(message)\n", stderr)
@@ -63,6 +63,19 @@ expect(!expanded.contains(CGPoint(x: 1035, y: 750)), "Leaving the panel and its 
 expect(!compact.contains(CGPoint(x: 960, y: 815)), "The old expanded bounds cannot reopen a compact island")
 print("PASS: 9 camera hover and island boundary checks")
 
+let hover = HoverController()
+let openingGrace = Date().addingTimeInterval(1)
+hover.holdOpenUntil = openingGrace
+hover.checkPointer(blocked: false, inside: true, expanded: true, hoverEnabled: true,
+    expand: { preconditionFailure("An open island does not reopen") },
+    scheduleCollapse: { preconditionFailure("The pointer is inside") })
+expect(hover.holdOpenUntil == openingGrace, "A pointer update must not cancel the first-click grace period")
+hover.keyboardHeld = true
+hover.checkPointer(blocked: false, inside: true, expanded: true, hoverEnabled: true,
+    expand: { preconditionFailure("An open island does not reopen") },
+    scheduleCollapse: { preconditionFailure("The pointer is inside") })
+expect(!hover.keyboardHeld && hover.holdOpenUntil == .distantPast, "Pointer entry releases a keyboard-opened island")
+
 let currentVersion = ApplicationVersion("0.11.0", build: "22")
 let sameVersion = ApplicationVersion("0.11", build: "22.0")
 expect(currentVersion == sameVersion, "Trailing zeros do not change a release/build version")
@@ -111,6 +124,15 @@ let external = ScreenGeometry(frame: CGRect(x: -1920, y: -200, width: 1920, heig
 expect(external.notchWidth == 0 && external.cameraInputFrame(attached: false) == nil, "Notchless screen has no camera hit target")
 expect(external.panelFrame(size: CGSize(width: 660, height: 250), attached: false, flushToTop: false, floatingGap: 8) == CGRect(x: -1290, y: 598, width: 660, height: 250), "Negative-origin external screen placement")
 expect(screen.panelFrame(size: CGSize(width: 116, height: 31), attached: true, flushToTop: false, floatingGap: 0).maxY == 942, "Closed camera-band clearance preserved")
+let safeMediaFrame = screen.panelFrame(size: CGSize(width: 230, height: 38), attached: true,
+    flushToTop: false, floatingGap: 8, attachedGap: 0)
+expect(safeMediaFrame.maxY == screen.menuBottom && safeMediaFrame.midX == screen.cameraCenterX(attached: true),
+       "The compact player stays directly below the menu bar and centered under the camera")
+let safeMediaHover = IslandHoverRegion(panel: safeMediaFrame,
+    camera: screen.cameraInputFrame(attached: true, below: 8), panelTopLimit: screen.menuBottom)
+expect(!safeMediaHover.contains(CGPoint(x: 652, y: 946)), "Hover padding must not enter the menu bar")
+expect(safeMediaHover.contains(CGPoint(x: 652, y: 944)), "The top edge of the media player still responds")
+expect(safeMediaHover.contains(CGPoint(x: 756, y: 982)), "The physical camera still opens the protected player")
 print("PASS: notched/notchless geometry, multi-display origins and point-based placement independent of backing scale")
 
 

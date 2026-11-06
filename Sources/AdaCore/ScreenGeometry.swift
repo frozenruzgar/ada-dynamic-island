@@ -27,8 +27,9 @@ public struct ScreenGeometry: Sendable {
         guard attached, notchWidth > 0, let left = auxiliaryLeft, let right = auxiliaryRight else { return frame.midX }
         return (left.maxX + right.minX) / 2
     }
-    public func panelFrame(size: CGSize, attached: Bool, flushToTop: Bool, floatingGap: CGFloat) -> CGRect {
-        let top = flushToTop ? frame.maxY : menuBottom - (attached ? 2 : floatingGap)
+    public func panelFrame(size: CGSize, attached: Bool, flushToTop: Bool, floatingGap: CGFloat,
+                           attachedGap: CGFloat = 2) -> CGRect {
+        let top = flushToTop ? frame.maxY : menuBottom - (attached ? attachedGap : floatingGap)
         return CGRect(x: cameraCenterX(attached: attached) - size.width / 2,
                       y: top - size.height, width: size.width, height: size.height)
     }

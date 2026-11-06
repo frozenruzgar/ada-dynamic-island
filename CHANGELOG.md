@@ -1,5 +1,12 @@
 # Değişiklikler / Changelog
 
+## 0.12.1 — Tıklama ve görünüm
+
+- Ada açılırken düğmeler sabit konumda kalır ve açılış tıklaması paneli erken kapatmaz.
+- Başlıklarda Avenir Next Bold kullanılır. Küçük ada boşta yazısız görünür.
+- Küçük müzik göstergesi isteğe bağlı olarak menü çubuğunun altında durur.
+- Fareyle açılma kapalıyken çentiğe tekrar tıklayarak panel kapatılabilir.
+
 ## 0.12.0 — Çalışma alanı ve yayın hazırlığı
 
 - Yeni uygulama kimliğine eski notlar, raf ve ayarların tek seferlik aktarımı.

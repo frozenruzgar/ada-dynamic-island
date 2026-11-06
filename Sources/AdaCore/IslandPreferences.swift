@@ -73,6 +73,7 @@ public struct IslandPreferences: Codable, Equatable, Sendable {
     public var showQuickActions = true
     public var showMusic = true
     public var showNowPlaying = true
+    public var keepCompactMusicBelowMenu = false
     public var pomodoro = true
     public var breakMinutes = 5
     public var displayChoice = IslandDisplayChoice.builtin
@@ -144,6 +145,7 @@ public struct IslandPreferences: Codable, Equatable, Sendable {
         showQuickActions = read("showQuickActions", showQuickActions)
         showMusic = read("showMusic", showMusic)
         showNowPlaying = read("showNowPlaying", showNowPlaying)
+        keepCompactMusicBelowMenu = read("keepCompactMusicBelowMenu", keepCompactMusicBelowMenu)
         pomodoro = read("pomodoro", pomodoro)
         breakMinutes = read("breakMinutes", breakMinutes)
         displayChoice = read("displayChoice", displayChoice)

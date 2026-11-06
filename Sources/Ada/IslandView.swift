@@ -31,26 +31,20 @@ struct IslandView: View {
             if model.expanded {
                 expandedContent.padding(.top, model.contentTopInset).transition(.opacity).zIndex(1)
             }
-            else { compactContent.transition(.opacity) }
+            else { compactContent.transition(.asymmetric(insertion: .opacity, removal: .identity)) }
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
         .background {
-            if model.expanded || model.compactVisible {
-                if model.expanded && model.page == .player {
-                    outline.fill(Color(white: 0.025))
-                } else if !model.expanded && model.mediaIsPlaying {
-                    outline.fill(.black)
-                } else if model.preferences.usesNebulaPalette {
-                    IslandAuroraSurface(tintIntensity: model.preferences.panelOpacity,
-                        isAnimated: model.preferences.backgroundMotion != .off && BackgroundMotionPolicy.permitsAnimation(
-                            expanded: model.expanded, keyWindow: model.panelIsKey, pointerInside: model.pointerInside,
-                            lowPower: model.lowPowerMode, batteryPercent: model.batteryPercent, reduceMotion: reduceMotion),
-                        framesPerSecond: model.preferences.backgroundMotion.framesPerSecond)
-                } else {
-                    IslandSurface(palette: model.panelGradient, tintIntensity: model.preferences.panelOpacity,
-                                  shape: outline, backdropRadius: model.flushToTop ? 0 : radius)
+            ZStack(alignment: .top) {
+                if model.expanded {
+                    backgroundSurface.transition(.asymmetric(
+                        insertion: reduceMotion ? .opacity : .opacity.combined(with: .scale(scale: 0.88, anchor: .top)),
+                        removal: .identity))
+                } else if model.compactVisible {
+                    backgroundSurface.transition(.identity)
                 }
             }
+            .allowsHitTesting(false)
         }
         .clipShape(outline)
         .contentShape(Rectangle())
@@ -91,6 +85,23 @@ struct IslandView: View {
                                      bottomTrailingRadius: radius, topTrailingRadius: upperRadius)
     }
 
+    @ViewBuilder private var backgroundSurface: some View {
+        if model.expanded && model.page == .player {
+            outline.fill(Color(white: 0.025))
+        } else if !model.expanded && model.mediaIsPlaying {
+            outline.fill(.black)
+        } else if model.preferences.usesNebulaPalette {
+            IslandAuroraSurface(tintIntensity: model.preferences.panelOpacity,
+                isAnimated: model.preferences.backgroundMotion != .off && BackgroundMotionPolicy.permitsAnimation(
+                    expanded: model.expanded, keyWindow: model.panelIsKey, pointerInside: model.pointerInside,
+                    lowPower: model.lowPowerMode, batteryPercent: model.batteryPercent, reduceMotion: reduceMotion),
+                framesPerSecond: model.preferences.backgroundMotion.framesPerSecond)
+        } else {
+            IslandSurface(palette: model.panelGradient, tintIntensity: model.preferences.panelOpacity,
+                          shape: outline, backdropRadius: model.flushToTop ? 0 : radius)
+        }
+    }
+
     private var compactContent: some View {
         CompactIslandContent(model: model, focus: model.focus, media: media, onOpenCompact: onOpenCompact)
     }
@@ -105,7 +116,8 @@ struct IslandView: View {
             ZStack {
                 pageContent
                     .id(model.page)
-                    .transition(reduceMotion ? .opacity : .opacity.combined(with: .scale(scale: 0.985)))
+                    .transition(.asymmetric(insertion: reduceMotion ? .opacity : .opacity.combined(with: .scale(scale: 0.985)),
+                                            removal: .identity))
             }
                 .frame(maxWidth: .infinity, maxHeight: .infinity)
                 .padding(.horizontal, isPlayer ? 12 : 16)
@@ -300,7 +312,7 @@ private struct CompactIslandContent: View {
                     .frame(height: model.closedHeight)
             } else if model.mediaIsPlaying, let track = media.track, track.isPlaying {
                 CompactNowPlayingView(track: track, notchWidth: model.notchWidth, totalWidth: model.closedWidth,
-                                      attached: model.attached, accent: model.accentColor)
+                                      attached: model.attached && !model.compactMusicBelowMenu, accent: model.accentColor)
             } else if model.compactHasContent {
                 HStack(spacing: 8) {
                     Group {
@@ -325,13 +337,7 @@ private struct CompactIslandContent: View {
                 .adaFont(size: 11, weight: .semibold, design: .rounded)
                 .padding(.horizontal, 15)
                 .frame(height: model.closedHeight)
-            } else if model.compactVisible {
-                HStack(spacing: 7) {
-                    Circle().fill(model.accentColor).frame(width: 5, height: 5)
-                    Text("Ada").adaFont(size: 12, weight: .medium)
-                }.frame(height: model.closedHeight)
             }
-
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity)
         .contentShape(Rectangle())

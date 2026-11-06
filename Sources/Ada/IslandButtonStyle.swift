@@ -93,6 +93,7 @@ private struct IslandButtonBody: View {
             }
             .opacity(isEnabled ? 1 : 0.55)
             .scaleEffect(scale)
+            .contentShape(.interaction, Rectangle())
             .animation(response, value: isPressed)
             .animation(.easeOut(duration: 0.18), value: isHovered)
             .onHover { isHovered = isEnabled && $0 }

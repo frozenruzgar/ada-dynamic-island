@@ -1,4 +1,5 @@
 import AdaCore
+import AppKit
 import SwiftUI
 
 enum Typography {
@@ -21,12 +22,32 @@ extension EnvironmentValues {
     }
 }
 private struct AdaFont: ViewModifier {
+    private static let medium = "AvenirNext-Medium"
+    private static let demiBold = "AvenirNext-DemiBold"
+    private static let bold = "AvenirNext-Bold"
+    private static let availableFaces = Set([medium, demiBold, bold].filter { NSFont(name: $0, size: 12) != nil })
+
     let size: CGFloat
     let weight: Font.Weight
     let design: Font.Design
     @Environment(\.adaTextScale) private var scale
+
     func body(content: Content) -> some View {
-        content.font(.system(size: TypographyMetrics.pointSize(base: size, scale: scale), weight: weight, design: design))
+        let pointSize = TypographyMetrics.pointSize(base: size, scale: scale)
+        if design != .monospaced, let face, Self.availableFaces.contains(face) {
+            content.font(.custom(face, fixedSize: pointSize))
+        } else {
+            content.font(.system(size: pointSize, weight: weight, design: design))
+        }
+    }
+
+    private var face: String? {
+        switch weight {
+        case .regular: return Self.medium
+        case .medium: return Self.demiBold
+        case .semibold, .bold: return Self.bold
+        default: return nil
+        }
     }
 }
 struct IslandCardSurface: ViewModifier {

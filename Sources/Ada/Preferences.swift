@@ -67,10 +67,10 @@ extension IslandModel {
     var compactVisible: Bool { !attached || compactHasContent || !preferences.hoverToOpen }
     var closedWidth: CGFloat {
         if activityVisible { return 220 }
-        if mediaIsPlaying { return attached ? max(150, notchWidth) + 88 : 230 }
+        if mediaIsPlaying { return attached && !compactMusicBelowMenu ? max(150, notchWidth) + 88 : 230 }
         return compactHasContent ? 166 : 116
     }
-    var closedHeight: CGFloat { mediaIsPlaying ? (attached ? max(38, menuBarHeight) : 38) : 31 }
+    var closedHeight: CGFloat { mediaIsPlaying ? (attached && !compactMusicBelowMenu ? max(38, menuBarHeight) : 38) : 31 }
     var primaryTitle: String {
         if clock.isRunning { return L10n.string("Duraklat") }
         if clock.completed { return preferences.pomodoro && !isBreak ? L10n.string("Molaya başla") : L10n.string("Odağa başla") }

@@ -13,7 +13,7 @@ final class HoverController {
         guard !blocked else { cancelCollapse(); return }
         if inside {
             cancelCollapse()
-            if expanded {
+            if expanded && keyboardHeld {
                 holdOpenUntil = .distantPast
                 keyboardHeld = false
             }
