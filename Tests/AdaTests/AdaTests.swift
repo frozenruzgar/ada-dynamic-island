@@ -2,7 +2,7 @@ import XCTest
 @testable import AdaCheckSuite
 
 final class AdaTests: XCTestCase {
-    @MainActor func testCorePolicies() async throws { try CoreChecks.main() }
+    @MainActor func testCorePolicies() async throws { try await CoreChecks.main() }
     @MainActor func testAssistantChecks() async throws { await AssistantChecks.main() }
     @MainActor func testBatteryEventChecks() async throws { BatteryEventChecks.main() }
     @MainActor func testCalendarChecks() async throws { CalendarChecks.main() }

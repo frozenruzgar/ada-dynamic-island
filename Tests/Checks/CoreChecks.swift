@@ -4,7 +4,7 @@ import CoreGraphics
 import AdaCore
 
 enum CoreChecks {
-    @MainActor static func main() throws {
+    @MainActor static func main() async throws {
 func expect(_ condition: @autoclosure () -> Bool, _ message: String) {
     guard condition() else {
         fputs("FAIL: \(message)\n", stderr)
@@ -67,14 +67,37 @@ let hover = HoverController()
 let openingGrace = Date().addingTimeInterval(1)
 hover.holdOpenUntil = openingGrace
 hover.checkPointer(blocked: false, inside: true, expanded: true, hoverEnabled: true,
-    expand: { preconditionFailure("An open island does not reopen") },
+    canExpand: { false }, expand: { preconditionFailure("An open island does not reopen") },
     scheduleCollapse: { preconditionFailure("The pointer is inside") })
 expect(hover.holdOpenUntil == openingGrace, "A pointer update must not cancel the first-click grace period")
 hover.keyboardHeld = true
 hover.checkPointer(blocked: false, inside: true, expanded: true, hoverEnabled: true,
-    expand: { preconditionFailure("An open island does not reopen") },
+    canExpand: { false }, expand: { preconditionFailure("An open island does not reopen") },
     scheduleCollapse: { preconditionFailure("The pointer is inside") })
 expect(!hover.keyboardHeld && hover.holdOpenUntil == .distantPast, "Pointer entry releases a keyboard-opened island")
+
+var openingCount = 0
+var pointerInTarget = true
+func updateHover(inside: Bool) {
+    hover.checkPointer(blocked: false, inside: inside, expanded: false, hoverEnabled: true,
+        canExpand: { pointerInTarget }, expand: { openingCount += 1 }, scheduleCollapse: {})
+}
+updateHover(inside: true)
+expect(openingCount == 0, "Entering the camera strip does not open immediately")
+updateHover(inside: false)
+try await Task.sleep(for: .milliseconds(250))
+expect(openingCount == 0, "Moving across the camera strip cancels the opening")
+updateHover(inside: true)
+pointerInTarget = false
+try await Task.sleep(for: .milliseconds(250))
+expect(openingCount == 0, "Opening rechecks the pointer even if the exit event is missed")
+pointerInTarget = true
+updateHover(inside: true)
+updateHover(inside: true)
+try await Task.sleep(for: .milliseconds(250))
+expect(openingCount == 1, "Staying over the camera opens once")
+hover.stop()
+print("PASS: delayed camera hover, flyby cancellation and pointer recheck")
 
 let currentVersion = ApplicationVersion("0.11.0", build: "22")
 let sameVersion = ApplicationVersion("0.11", build: "22.0")
@@ -119,9 +142,15 @@ let screen = ScreenGeometry(frame: CGRect(x: 0, y: 0, width: 1512, height: 982),
 expect(screen.notchWidth == 192 && screen.cameraCenterX(attached: true) == 756, "Physical camera gap geometry")
 let attachedFrame = screen.panelFrame(size: CGSize(width: 660, height: 280), attached: true, flushToTop: true, floatingGap: 8)
 expect(attachedFrame == CGRect(x: 426, y: 702, width: 660, height: 280), "Attached panel covers top in logical points")
-expect(screen.cameraInputFrame(attached: true)?.contains(CGPoint(x: 756, y: 981)) == true, "Hover includes camera top")
+expect(screen.cameraInputFrame(attached: true)?.contains(CGPoint(x: 756, y: 981)) == true, "Direct camera input includes the top edge")
+expect(screen.cameraHoverFrame?.contains(CGPoint(x: 756, y: 982)) == true, "Hover opens at the exact camera center on the top edge")
+expect(screen.cameraHoverFrame?.contains(CGPoint(x: 700, y: 963)) == true, "Hover opens to the left and below the camera center")
+expect(screen.cameraHoverFrame?.contains(CGPoint(x: 812, y: 963)) == true, "Hover opens to the right and below the camera center")
+expect(screen.cameraHoverFrame?.contains(CGPoint(x: 756, y: 959)) == false, "Approaching from the bottom of the notch does not start hover opening")
+expect(screen.cameraHoverFrame?.contains(CGPoint(x: 695, y: 981)) == false, "The sides of a wide notch do not start hover opening")
 let external = ScreenGeometry(frame: CGRect(x: -1920, y: -200, width: 1920, height: 1080), visibleFrame: CGRect(x: -1920, y: -200, width: 1920, height: 1056), safeTop: 0, statusBarHeight: 24)
 expect(external.notchWidth == 0 && external.cameraInputFrame(attached: false) == nil, "Notchless screen has no camera hit target")
+expect(external.cameraHoverFrame == nil, "An external screen without a notch can use the compact island as its target")
 expect(external.panelFrame(size: CGSize(width: 660, height: 250), attached: false, flushToTop: false, floatingGap: 8) == CGRect(x: -1290, y: 598, width: 660, height: 250), "Negative-origin external screen placement")
 expect(screen.panelFrame(size: CGSize(width: 116, height: 31), attached: true, flushToTop: false, floatingGap: 0).maxY == 942, "Closed camera-band clearance preserved")
 let safeMediaFrame = screen.panelFrame(size: CGSize(width: 230, height: 38), attached: true,

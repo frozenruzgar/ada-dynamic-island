@@ -2,7 +2,7 @@ import Foundation
 /// Same cases run through XCTest on full Xcode and the CLT fallback locally.
 @MainActor public enum AdaCheckSuite {
     public static func runAll() async throws {
-        try CoreChecks.main()
+        try await CoreChecks.main()
         await AssistantChecks.main()
         BatteryEventChecks.main()
         CalendarChecks.main()

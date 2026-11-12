@@ -23,6 +23,13 @@ public struct ScreenGeometry: Sendable {
     }
     public var menuBottom: CGFloat { min(visibleFrame.maxY, frame.maxY - max(safeTop, statusBarHeight)) }
     public var menuBarHeight: CGFloat { frame.maxY - menuBottom }
+    public var cameraHoverFrame: CGRect? {
+        guard let camera = cameraInputFrame(attached: true) else { return nil }
+        let width = min(120, camera.width)
+        let height = min(22, safeTop)
+        return CGRect(x: camera.midX - width / 2, y: frame.maxY - height,
+                      width: width, height: height + 0.5)
+    }
     public func cameraCenterX(attached: Bool) -> CGFloat {
         guard attached, notchWidth > 0, let left = auxiliaryLeft, let right = auxiliaryRight else { return frame.midX }
         return (left.maxX + right.minX) / 2

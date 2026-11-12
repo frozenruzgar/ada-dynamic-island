@@ -71,13 +71,17 @@ struct IslandView: View {
         .adaFont()
         .tint(model.accentColor)
         .accentColor(model.accentColor)
-        .animation(reduceMotion ? nil : .easeInOut(duration: 0.18), value: model.expanded)
+        .animation(reduceMotion ? nil : expansionAnimation, value: model.expanded)
         .alert("Ada", isPresented: Binding(get: { actions.errorMessage != nil }, set: { if !$0 { actions.clearError() } })) {
             Button(L10n.string("Tamam"), action: actions.clearError)
         } message: { Text(actions.errorMessage ?? "") }
     }
 
     private var radius: CGFloat { model.expanded ? (model.page == .player ? 18 : 23) : 15 }
+
+    private var expansionAnimation: Animation {
+        model.expanded ? .easeOut(duration: 0.10) : .easeInOut(duration: 0.18)
+    }
 
     private var outline: UnevenRoundedRectangle {
         let upperRadius = model.flushToTop ? 0 : radius

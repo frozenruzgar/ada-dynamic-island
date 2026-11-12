@@ -225,7 +225,8 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         let visibleFrame = model.expanded || model.compactVisible ? (lastTargetFrame ?? panel.frame) : nil
         let keepsMenuClear = model.compactMusicBelowMenu
         return IslandHoverRegion(panel: visibleFrame,
-            camera: cameraInputFrame(horizontalPadding: keepsMenuClear ? 0 : 3, below: 8),
+            camera: cameraInputFrame(horizontalPadding: keepsMenuClear ? 0 : 3, below: 8)
+                ?? selectedGeometry?.cameraHoverFrame,
             panelTopLimit: keepsMenuClear ? selectedGeometry?.menuBottom : nil)
     }
 
@@ -297,13 +298,29 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         if !panel.isKeyWindow { hover.keyboardHeld = false }
     }
 
+    private var hoverIsBlocked: Bool {
+        !visible || settingsWindow?.isVisible == true || tilePickerWindow?.isVisible == true ||
+            welcomeController.isVisible || !trackingMenus.isEmpty
+    }
+
+    private func pointerOverOpeningTarget(_ pointer: NSPoint) -> Bool {
+        if NSEvent.pressedMouseButtons != 0 {
+            return model.preferences.openShelfOnDrag && pointerNearPanel(pointer)
+        }
+        if let camera = selectedGeometry?.cameraHoverFrame { return camera.contains(pointer) }
+        return model.compactVisible && (lastTargetFrame ?? panel.frame).contains(pointer)
+    }
+
     private func checkPointer() {
-        let inside = visible && pointerNearPanel(NSEvent.mouseLocation)
+        let pointer = NSEvent.mouseLocation
+        let inside = visible && (model.expanded ? pointerNearPanel(pointer) : pointerOverOpeningTarget(pointer))
         if model.pointerInside != inside { model.pointerInside = inside }
-        hover.checkPointer(blocked: !visible || settingsWindow?.isVisible == true || tilePickerWindow?.isVisible == true || welcomeController.isVisible,
-            inside: inside, expanded: model.expanded,
-            hoverEnabled: model.preferences.hoverToOpen &&
-                (model.preferences.openShelfOnDrag || NSEvent.pressedMouseButtons == 0),
+        hover.checkPointer(blocked: hoverIsBlocked, inside: inside, expanded: model.expanded,
+            hoverEnabled: model.preferences.hoverToOpen, canExpand: { [weak self] in
+                guard let self, !self.hoverIsBlocked, !self.model.expanded,
+                      self.model.preferences.hoverToOpen else { return false }
+                return self.pointerOverOpeningTarget(NSEvent.mouseLocation)
+            },
             expand: { [weak self] in self?.expandFromHover() },
             scheduleCollapse: { [weak self] in self?.scheduleCollapse() })
     }
@@ -371,6 +388,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     }
 
     private func expand(to destination: IslandPage? = nil) {
+        hover.cancelOpening()
         cancelCollapse()
         if !visible { visible = true; panel.orderFrontRegardless() }
         if let destination {
@@ -421,6 +439,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     @objc private func menuStartedTracking(_ notification: Notification) {
         guard let menu = notification.object as? NSMenu else { return }
         trackingMenus.insert(ObjectIdentifier(menu))
+        hover.cancelOpening()
         cancelCollapse()
     }
 
@@ -455,7 +474,10 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         expand()
     }
 
-    @objc private func screenChanged() { updateScreen() }
+    @objc private func screenChanged() {
+        hover.cancelOpening()
+        updateScreen()
+    }
     @objc private func wokeUp() {
         model.refreshBattery()
         model.activities.completeIfNeeded()
@@ -557,6 +579,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
 
     @objc private func toggleVisible() {
         visible.toggle()
+        hover.cancelOpening()
         cancelCollapse()
         if visible { updateScreen(); panel.orderFrontRegardless() }
         else { panel.orderOut(nil) }
